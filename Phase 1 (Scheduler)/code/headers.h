@@ -18,20 +18,39 @@ typedef short bool;
 
 #define SHKEY 300
 
-///==============================
+#define gcc "/usr/bin/gcc "
+
+// ============================== //
 // don't mess with this variables //
+
 int *shmaddr; //
 int msgqId;
 
 struct Process
 {
-    bool running;
-    int executaionTime, remainingTime, waitingTime;
+    bool running, lastProcess; // lastProcess in the whole program
+    int executaionTime, remainingTime, waitingTime, priority;
     char text[5]; // if "End": this is the last process in this second, else receive more;
 };
 typedef struct Process Process;
 
-//===============================
+// =============================== //
+
+void compileAndRun(char *fileName)
+{
+    char *compile, *run;
+
+    strcpy(compile, gcc);
+    strcat(compile, filename);
+    strcat(compile, ".c -o ");
+    strcat(compile, filename);
+
+    strcpy(run, "./");
+    strcat(run, fileName);
+
+    system(compile);
+    system(run);
+}
 
 int getClk()
 {
@@ -122,7 +141,7 @@ void destroyClk(bool terminateAll)
 
 struct node
 {
-    int data;
+    Process data;
     struct node *next;
 };
 
@@ -143,19 +162,19 @@ void initialize(queue *q)
     q->rear = NULL;
 }
 
-int isempty(queue *q)
+bool isEmpty(queue *q)
 {
     return (q->rear == NULL);
 }
 
-void push(queue *q, int value)
+void enqueue(queue *q, Process value)
 {
     node *tmp;
     tmp = malloc(sizeof(node));
     tmp->data = value;
     tmp->next = NULL;
 
-    if (!isempty(q))
+    if (!isEmpty(q))
     {
         q->rear->next = tmp;
         q->rear = tmp;
@@ -167,10 +186,10 @@ void push(queue *q, int value)
     q->count++;
 }
 
-int pop(queue *q)
+Process dequeue(queue *q)
 {
     node *tmp;
-    int n = q->front->data;
+    Process n = q->front->data;
     tmp = q->front;
     q->front = q->front->next;
     q->count--;
@@ -182,20 +201,20 @@ int pop(queue *q)
  * Priority queue using linked-list 
  * 
  * Node* pq;
- * initQueue(pq);
+ * initilize(&pq);
  * push(&pq, 7, 0); 
  * pop(&pq); 
 */
 
 typedef struct node
 {
-    int data;
+    Process data;
     int priority; // lower value -> higher priority
 
     struct node *next;
 } Node;
 
-Node *newNode(int d, int p)
+Node *newNode(Process d, int p)
 {
     Node *temp = (Node *)malloc(sizeof(Node));
     temp->data = d;
@@ -210,7 +229,7 @@ void initialize(Node **head)
     (*head) = NULL;
 }
 
-void push(Node **head, int d, int p)
+void push(Node **head, Process d, int p)
 {
     Node *temp = newNode(d, p);
 
@@ -237,12 +256,17 @@ void push(Node **head, int d, int p)
     }
 }
 
-int pop(Node **head)
+Process pop(Node **head)
 {
     Node *temp = *head;
-    int ret = (*head)->data;
+    Process ret = (*head)->data;
     (*head) = (*head)->next;
     free(temp);
 
     return ret;
+}
+
+bool isEmpty(Node **head)
+{
+    return (*head) == NULL;
 }

@@ -9,7 +9,9 @@ int main(int argc, char *argv[])
     // TODO Initialization
     // 1. Read the input files.
     // 2. Ask the user for the chosen scheduling algorithm and its parameters, if there are any.
-    // 3. Initiate and create the scheduler and clock processes.
+    /* 3. Initiate and create the scheduler and clock processes.
+     *   Note: look at compileAndRun funciton in the header. (just send the file name without .c)
+    */
     // 4. Use this function after creating the clock process to initialize clock
     initClk();
     // To get time use this
