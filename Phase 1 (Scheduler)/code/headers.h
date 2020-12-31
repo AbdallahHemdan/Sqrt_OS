@@ -1,4 +1,4 @@
-#include <stdio.h>      //if you don't use scanf/printf change this include
+#include <stdio.h> //if you don't use scanf/printf change this include
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
@@ -10,26 +10,33 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <string.h>
 
 typedef short bool;
 #define true 1
-#define false 1
+#define false 0
 
 #define SHKEY 300
 
-
 ///==============================
-//don't mess with this variable//
-int * shmaddr;                 //
+// don't mess with this variables //
+int *shmaddr; //
+int msgqId;
+
+struct Process
+{
+    bool running;
+    int executaionTime, remainingTime, waitingTime;
+    char text[5]; // if "End": this is the last process in this second, else receive more;
+};
+typedef struct Process Process;
+
 //===============================
-
-
 
 int getClk()
 {
     return *shmaddr;
 }
-
 
 /*
  * All processes call this function at the beginning to establish communication between them and the clock module.
@@ -45,9 +52,43 @@ void initClk()
         sleep(1);
         shmid = shmget(SHKEY, 4, 0444);
     }
-    shmaddr = (int *) shmat(shmid, (void *)0, 0);
+    shmaddr = (int *)shmat(shmid, (void *)0, 0);
 }
 
+void initMsgq()
+{
+    key_t msgqKey = ftok("keyfile", 'M');
+    msgqId = msgget(msgqKey, 0666 | IPC_CREAT);
+
+    if (!~msgqId)
+    {
+        perror("Error in creating of message queue");
+        exit(-1);
+    }
+    printf("Message Queue ID = %d\n", msgqId);
+}
+
+void sendMessage(Process process)
+{
+    int send_val = msgsnd(msgqId, &process, sizeof(process.text), !IPC_NOWAIT);
+
+    if (send_val == -1)
+        perror("Error in sending the process");
+}
+
+Process receiveMessage()
+{
+    Process process;
+
+    int rec_val = msgrcv(msgqId, &process, sizeof(process.text), 0, !IPC_NOWAIT);
+
+    if (rec_val == -1)
+        perror("Error in receive");
+    else
+        printf("Message received: %s\n", process.text);
+
+    return process;
+}
 
 /*
  * All process call this function at the end to release the communication
@@ -64,4 +105,144 @@ void destroyClk(bool terminateAll)
     {
         killpg(getpgrp(), SIGINT);
     }
+}
+
+/*
+ * Queue implementation using linked-list 
+ * we used linked-list to make it easy to add a process and remove it
+ * 
+ * How to initilize it:
+ *      queue *q;
+ *      q = malloc(sizeof(queue));
+ *      initialize(q);
+ *      enqueue(q, val);
+ *      dequeue(q);
+ * 
+*/
+
+struct node
+{
+    int data;
+    struct node *next;
+};
+
+struct queue
+{
+    int count;
+    node *front;
+    node *rear;
+};
+
+typedef struct node node;
+typedef struct queue queue;
+
+void initialize(queue *q)
+{
+    q->count = 0;
+    q->front = NULL;
+    q->rear = NULL;
+}
+
+int isempty(queue *q)
+{
+    return (q->rear == NULL);
+}
+
+void push(queue *q, int value)
+{
+    node *tmp;
+    tmp = malloc(sizeof(node));
+    tmp->data = value;
+    tmp->next = NULL;
+
+    if (!isempty(q))
+    {
+        q->rear->next = tmp;
+        q->rear = tmp;
+    }
+    else
+    {
+        q->front = q->rear = tmp;
+    }
+    q->count++;
+}
+
+int pop(queue *q)
+{
+    node *tmp;
+    int n = q->front->data;
+    tmp = q->front;
+    q->front = q->front->next;
+    q->count--;
+    free(tmp);
+    return (n);
+}
+
+/*
+ * Priority queue using linked-list 
+ * 
+ * Node* pq;
+ * initQueue(pq);
+ * push(&pq, 7, 0); 
+ * pop(&pq); 
+*/
+
+typedef struct node
+{
+    int data;
+    int priority; // lower value -> higher priority
+
+    struct node *next;
+} Node;
+
+Node *newNode(int d, int p)
+{
+    Node *temp = (Node *)malloc(sizeof(Node));
+    temp->data = d;
+    temp->priority = p;
+    temp->next = NULL;
+
+    return temp;
+}
+
+void initialize(Node **head)
+{
+    (*head) = NULL;
+}
+
+void push(Node **head, int d, int p)
+{
+    Node *temp = newNode(d, p);
+
+    if ((*head) == NULL) // Insert in empty queue
+    {
+        (*head) = temp;
+    }
+    else if ((*head)->priority > p) // Insert New Node before head
+    {
+        temp->next = *head;
+        (*head) = temp;
+    }
+    else
+    {
+        Node *start = (*head);
+
+        while (start->next != NULL && start->next->priority < p)
+        {
+            start = start->next;
+        }
+
+        temp->next = start->next;
+        start->next = temp;
+    }
+}
+
+int pop(Node **head)
+{
+    Node *temp = *head;
+    int ret = (*head)->data;
+    (*head) = (*head)->next;
+    free(temp);
+
+    return ret;
 }
