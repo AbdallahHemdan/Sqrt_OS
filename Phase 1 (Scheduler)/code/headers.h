@@ -41,9 +41,9 @@ void compileAndRun(char *fileName)
     char *compile, *run;
 
     strcpy(compile, gcc);
-    strcat(compile, filename);
+    strcat(compile, fileName);
     strcat(compile, ".c -o ");
-    strcat(compile, filename);
+    strcat(compile, fileName);
 
     strcpy(run, "./");
     strcat(run, fileName);
