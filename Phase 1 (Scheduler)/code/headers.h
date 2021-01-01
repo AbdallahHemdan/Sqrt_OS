@@ -24,32 +24,29 @@ typedef short bool;
 // don't mess with this variables //
 
 int *shmaddr; //
-int msgqId;
+char msqProcessKey = 'M';
 
 struct Process
 {
     bool running, lastProcess; // lastProcess in the whole program
-    int executaionTime, remainingTime, waitingTime, priority;
+    int executaionTime, remainingTime, waitingTime, priority, id;
     char text[5]; // if "End": this is the last process in this second, else receive more;
 };
 typedef struct Process Process;
 
 // =============================== //
 
-void compileAndRun(char *fileName)
+void compileAndRun(char *fileName, char *arg1, char *arg2)
 {
-    char *compile, *run;
-
-    strcpy(compile, gcc);
-    strcat(compile, filename);
+    char *compile;
+    compile = (char *)malloc((15 + 2 * sizeof(fileName) * sizeof(char)));
+    strcpy(compile, "gcc ");
+    strcat(compile, fileName);
     strcat(compile, ".c -o ");
-    strcat(compile, filename);
-
-    strcpy(run, "./");
-    strcat(run, fileName);
+    strcat(compile, fileName);
 
     system(compile);
-    system(run);
+    execl(fileName, arg1, arg2, NULL);
 }
 
 int getClk()
@@ -74,20 +71,20 @@ void initClk()
     shmaddr = (int *)shmat(shmid, (void *)0, 0);
 }
 
-void initMsgq()
+int initMsgq(char key)
 {
-    key_t msgqKey = ftok("keyfile", 'M');
-    msgqId = msgget(msgqKey, 0666 | IPC_CREAT);
+    key_t msgqKey = ftok("keyfile", key);
+    int msgqId = msgget(msgqKey, 0666 | IPC_CREAT);
 
     if (!~msgqId)
     {
         perror("Error in creating of message queue");
         exit(-1);
     }
-    printf("Message Queue ID = %d\n", msgqId);
+    return msgqId;
 }
 
-void sendMessage(Process process)
+void sendMessage(Process process, int msgqId)
 {
     int send_val = msgsnd(msgqId, &process, sizeof(process.text), !IPC_NOWAIT);
 
@@ -95,7 +92,7 @@ void sendMessage(Process process)
         perror("Error in sending the process");
 }
 
-Process receiveMessage()
+Process receiveMessage(int msgqId)
 {
     Process process;
 
@@ -139,6 +136,9 @@ void destroyClk(bool terminateAll)
  * 
 */
 
+typedef struct node node;
+typedef struct queue queue;
+
 struct node
 {
     Process data;
@@ -151,9 +151,6 @@ struct queue
     node *front;
     node *rear;
 };
-
-typedef struct node node;
-typedef struct queue queue;
 
 void initialize(queue *q)
 {
@@ -206,12 +203,12 @@ Process dequeue(queue *q)
  * pop(&pq); 
 */
 
-typedef struct node
+typedef struct Node
 {
     Process data;
     int priority; // lower value -> higher priority
 
-    struct node *next;
+    struct Node *next;
 } Node;
 
 Node *newNode(Process d, int p)
@@ -224,7 +221,7 @@ Node *newNode(Process d, int p)
     return temp;
 }
 
-void initialize(Node **head)
+void initializePQ(Node **head)
 {
     (*head) = NULL;
 }
@@ -266,7 +263,7 @@ Process pop(Node **head)
     return ret;
 }
 
-bool isEmpty(Node **head)
+bool isEmptyPQ(Node **head)
 {
     return (*head) == NULL;
 }

@@ -7,12 +7,14 @@ void RR();
 int main(int argc, char *argv[])
 {
     initClk();
-
-    int algorithm = stoi(argv[1]);
-
+    int algorithm = atoi(argv[0]);
+    int quantum = atoi(argv[1]);
     //TODO implement the scheduler :)
+    int msqProcessId = initMsgq(msqProcessKey);
     //upon termination release the clock resources.
 
+    while (true)
+        ;
     switch (algorithm)
     {
     case 1:
