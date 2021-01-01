@@ -13,12 +13,14 @@ struct curProcess
 int main(int argc, char *argv[])
 {
     initClk();
+    int algorithm = atoi(argv[0]);
+    int quantum = atoi(argv[1]);
+    //TODO implement the scheduler :)
+    int msqProcessId = initMsgq(msqProcessKey);
+    //upon termination release the clock resources.
 
-    int algorithm = stoi(argv[1]);
-
-    // TODO implement the scheduler :)
-    // upon termination release the clock resources.
-
+    while (true)
+        ;
     switch (algorithm)
     {
     case 1:
