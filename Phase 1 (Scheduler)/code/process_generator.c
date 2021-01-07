@@ -18,12 +18,11 @@ int main(int argc, char *argv[])
     fclose(input);
     input = fopen("processes.txt", "r");
     Process *processes = (Process *)malloc(numberOfProcesses * sizeof(Process));
-    int *startTime = (int *)malloc(numberOfProcesses * sizeof(int));
     int index = 0;
     while (getline(&line, &len, input) != -1)
     {
         fscanf(input, "%d", &(processes[index].id));
-        fscanf(input, "%d", &(startTime[index]));
+        fscanf(input, "%d", &(processes[index].arrivalTime));
         fscanf(input, "%d", &(processes[index].executaionTime));
         fscanf(input, "%d", &(processes[index].priority));
         if (index == numberOfProcesses - 1)
@@ -72,8 +71,9 @@ int main(int argc, char *argv[])
         while (last != x)
         {
             last = getClk();
-            while (startTime[index] == x)
+            while (processes[index].arrivalTime == x)
             {
+                printf("here\n");
                 sendMessage(processes[index], msqProcessId);
                 index++;
             }

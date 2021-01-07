@@ -25,12 +25,13 @@ typedef short bool;
 
 int *shmaddr; //
 char msqProcessKey = 'M';
+char shmProcessKey = 'S';
 
 struct Process
 {
+    char text[5];              // if "End": this is the last process in this second, else receive more;
     bool running, lastProcess; // lastProcess in the whole program
-    int executaionTime, remainingTime, waitingTime, priority, id;
-    char text[5]; // if "End": this is the last process in this second, else receive more;
+    int executaionTime, remainingTime, arrivalTime, waitingTime, priority, id, pid;
 };
 typedef struct Process Process;
 
@@ -38,7 +39,6 @@ typedef struct Process Process;
 
 void compileAndRun(char *fileName, char *arg1, char *arg2)
 {
-
     char *compile;
     compile = (char *)malloc((15 + 2 * sizeof(fileName) * sizeof(char)));
     strcpy(compile, "gcc ");
@@ -99,12 +99,29 @@ Process receiveMessage(int msgqId)
 
     int rec_val = msgrcv(msgqId, &process, sizeof(process.text), 0, !IPC_NOWAIT);
 
+    printf("%s\n", process.text);
+
     if (rec_val == -1)
         perror("Error in receive");
     else
         printf("Message received: %s\n", process.text);
 
     return process;
+}
+
+void *initShm(char key)
+{
+    key_t shmKey = ftok("keyfile", key);
+    int shmId = shmget(shmKey, 4096, 0666 | IPC_CREAT);
+
+    if (!~shmId)
+    {
+        perror("Error in creating of message queue");
+        exit(-1);
+    }
+
+    void *shmaddr = shmat(shmId, (void *)0, 0);
+    return shmaddr;
 }
 
 /*
