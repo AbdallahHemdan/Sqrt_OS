@@ -47,11 +47,12 @@ typedef struct Message Message;
 void compileAndRun(char *fileName, char *arg1, char *arg2)
 {
     char *compile;
-    compile = (char *)malloc((15 + 2 * sizeof(fileName) * sizeof(char)));
+    compile = (char *)malloc((20 + 2 * sizeof(fileName) * sizeof(char)));
     strcpy(compile, "gcc ");
     strcat(compile, fileName);
     strcat(compile, ".c -o ");
     strcat(compile, fileName);
+    strcat(compile, " -lm");
 
     system(compile);
     execl(fileName, arg1, arg2, NULL);
@@ -149,6 +150,30 @@ void destroyClk(bool terminateAll)
     }
 }
 
+typedef struct lNode lNode;
+
+struct lNode
+{
+    lNode *next;
+    double value;
+};
+
+void insert(lNode **head, double v)
+{
+    lNode *temp = (lNode *)malloc(sizeof(lNode));
+    temp->value = v;
+    temp->next = *head;
+    *head = temp;
+}
+
+double extract(lNode **head)
+{
+    lNode *temp = *head;
+    double val = (*head)->value;
+    (*head) = (*head)->next;
+    free(temp);
+    return val;
+}
 /*
  * Queue implementation using linked-list 
  * we used linked-list to make it easy to add a process and remove it

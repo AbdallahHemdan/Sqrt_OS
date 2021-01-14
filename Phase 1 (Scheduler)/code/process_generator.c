@@ -51,7 +51,6 @@ int main(int argc, char *argv[])
     /* 3. Initiate and create the scheduler and clock processes.
      *   Note: look at compileAndRun funciton in the header. (just send the file name without .c)
     */
-    printf("shm terminate id\n");
     msqProcessId = initMsgq(msqProcessKey);
     terminate = (int *)initShm(terminateKey, &shmTerminateId);
     *terminate = false;
@@ -98,4 +97,5 @@ void clearResources(int signum)
 {
     msgctl(msqProcessId, IPC_RMID, (struct msqid_ds *)0);
     shmctl(shmTerminateId, IPC_RMID, NULL);
+    signal(SIGINT, SIG_DFL);
 }
