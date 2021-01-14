@@ -107,10 +107,12 @@ Process receiveMessage(int msgqId)
     Message message;
     int rec_val = msgrcv(msgqId, &message, sizeof(message.process), 0, !IPC_NOWAIT);
     process = message.process;
+
     if (rec_val == -1)
         perror("Error in receive");
     // else if (strcmp(process.text, "End"))
     //     printf("Message received: %s clk %d\n", process.text, getClk());
+
     return process;
 }
 
@@ -185,7 +187,7 @@ void initialize(queue *q)
 
 bool isEmpty(queue *q)
 {
-    return (q->rear == NULL);
+    return !(q->count);
 }
 
 void enqueue(queue *q, Process value)

@@ -4,25 +4,20 @@ void HPF();
 void SRTN();
 void RR();
 
-struct curProcess
-{
-    Process process;
-    int runningTime;
-};
-
 int msqProcessId, *shmId, *terminate;
 int shmProcessRemainingTimeId, shmTerminateId;
+
 int main(int argc, char *argv[])
 {
     initClk();
     int algorithm = atoi(argv[0]);
     int quantum = atoi(argv[1]);
-    printf("shm terminate id %d\n", shmTerminateId);
 
     msqProcessId = initMsgq(msqProcessKey);
     shmId = (int *)initShm(shmProcessKey, &shmProcessRemainingTimeId);
     terminate = (int *)initShm(terminateKey, &shmTerminateId);
     *terminate = false;
+
     switch (algorithm)
     {
     case 1:
@@ -32,7 +27,7 @@ int main(int argc, char *argv[])
         SRTN();
         break;
     case 3:
-        RR();
+        RR(quantum);
         break;
     }
 
@@ -54,6 +49,7 @@ bool checkNewProcess(Process *newProcess)
 void HPF()
 {
     printf("HPF started\n");
+
     // 1. declare all needed variables
     bool lastProcess = 0;
     int lastSecond = -1;
@@ -73,10 +69,6 @@ void HPF()
     */
     while (!(lastProcess && isEmptyPQ(&pq) && *shmId == -1))
     {
-        while (lastSecond == getClk())
-            ;
-
-        lastSecond = getClk();
         Process receivedProcess;
         while (1) // get the new processes
         {
@@ -86,14 +78,26 @@ void HPF()
             else
             {
                 lastProcess = receivedProcess.lastProcess;
+                printf("lastProcess: %d\n", lastProcess);
                 push(&pq, receivedProcess, receivedProcess.priority);
             }
         }
+
+        if (*shmId == 0) // the running process has finished
+        {
+            printf("At time %d process %d finished arr %d total %d remain 0 wait %d TA %d WTA %d\n", getClk(),
+                   running.id, running.arrivalTime, running.executaionTime,
+                   (getClk() - running.arrivalTime) - running.executaionTime,
+                   getClk() - running.arrivalTime, (getClk() - running.arrivalTime) / running.executaionTime);
+            *shmId = -1;
+        }
+
         if (!isEmptyPQ(&pq) && *shmId == -1)
         {
             running = pop(&pq);
-            *shmId = running.executaionTime;
+            *shmId = running.executaionTime + 1;
             int processID = fork();
+
             if (processID == 0)
             {
                 printf("At time %d process %d started arr %d total %d remain %d wait %d\n",
@@ -103,6 +107,53 @@ void HPF()
                 compileAndRun("process", NULL, NULL);
             }
         }
+
+        while (lastSecond == getClk())
+            ;
+
+        lastSecond = getClk();
+    }
+
+    *terminate = true;
+    printf("Nice work Made with love ❤\n");
+}
+
+void SRTN()
+{
+    printf("SRTN started\n");
+
+    // 1. declare all needed variables
+    Node *pq;
+    Process running;
+    int lastSecond = -1;
+    bool lastProcess = 0;
+
+    // 2. initilization
+    *shmId = -1;
+    initializePQ(&pq);
+    running.remainingTime = 0;
+    printf("At time x process y started arr w total z remain y wait k\n");
+
+    /* 3. start working with processes
+     *  3.1 check every second if there is new processes (consuming)
+     *  3.2 push the new processes if there is any
+     *  3.3 contiune working
+    */
+    while (!(lastProcess && isEmptyPQ(&pq) && *shmId == -1))
+    {
+        Process receivedProcess;
+        while (1) // get the new processes
+        {
+            bool newProcess = checkNewProcess(&receivedProcess);
+            if (!newProcess)
+                break;
+            else
+            {
+                lastProcess = receivedProcess.lastProcess;
+                push(&pq, receivedProcess, receivedProcess.remainingTime);
+            }
+        }
+
         if (*shmId == 0) // the running process has finished
         {
             printf("At time %d process %d finished arr %d total %d remain 0 wait %d TA %d WTA %d\n", getClk(),
@@ -110,17 +161,168 @@ void HPF()
                    getClk() - running.arrivalTime, (getClk() - running.arrivalTime) / running.executaionTime);
             *shmId = -1;
         }
+
+        if (!isEmptyPQ(&pq))
+        {
+            Process top = pop(&pq);
+
+            if (top.remainingTime < *shmId)
+            {
+                running.remainingTime = *shmId;
+                push(&pq, running, running.remainingTime);
+                *shmId = -1;
+
+                kill(running.pid, SIGSTOP);
+                printf("At time %d process %d stopped arr %d total %d remain %d wait %d\n",
+                       getClk(), running.id, running.arrivalTime, running.executaionTime,
+                       running.remainingTime, getClk() - running.arrivalTime);
+
+                while (lastSecond == getClk())
+                    ;
+
+                lastSecond = getClk();
+            }
+
+            if (*shmId == -1)
+            {
+                *shmId = top.remainingTime + 1;
+                running = top;
+
+                if (top.remainingTime < top.executaionTime)
+                {
+                    kill(running.pid, SIGCONT);
+                    printf("At time %d process %d resumed arr %d total %d remain %d wait %d\n",
+                           getClk(), running.id, running.arrivalTime, running.executaionTime,
+                           running.remainingTime, getClk() - running.arrivalTime);
+                }
+                else
+                {
+                    running.pid = fork();
+
+                    if (running.pid == 0)
+                    {
+                        printf("At time %d process %d started arr %d total %d remain %d wait %d\n",
+                               getClk(), running.id, running.arrivalTime, running.executaionTime,
+                               running.executaionTime, getClk() - running.arrivalTime);
+
+                        compileAndRun("process", NULL, NULL);
+                    }
+                }
+            }
+            else // push it again into the pq
+            {
+                push(&pq, top, top.remainingTime);
+            }
+        }
+
+        while (lastSecond == getClk())
+            ;
+
+        lastSecond = getClk();
     }
+
     *terminate = true;
     printf("Nice work Made with love ❤\n");
 }
 
-void SRTN()
+void RR(int quantum)
 {
-    // Same as HPF
-}
+    printf("RR started\n");
 
-void RR()
-{
-    // Same as HPF with queue instead of priority queue
+    // 1. declare all needed variables
+    Node *pq;
+    Process running;
+    bool lastProcess = 0;
+    int lastSecond = -1, quantumCnt = 0;
+
+    // 2. initilization
+    *shmId = -1;
+    queue *q;
+    q = malloc(sizeof(queue));
+    initialize(q);
+    running.remainingTime = 0;
+    printf("At time x process y started arr w total z remain y wait k\n");
+
+    /* 3. start working with processes
+     *  3.1 check every second if there is new processes (consuming)
+     *  3.2 push the new processes if there is any
+     *  3.3 contiune working
+    */
+    while (!(lastProcess && isEmpty(q) && *shmId == -1))
+    {
+        quantumCnt--;
+        Process receivedProcess;
+
+        while (1) // get the new processes
+        {
+            bool newProcess = checkNewProcess(&receivedProcess);
+            if (!newProcess)
+                break;
+            else
+            {
+                lastProcess = receivedProcess.lastProcess;
+                enqueue(q, receivedProcess);
+            }
+        }
+
+        if (*shmId == 0) // the running process has finished
+        {
+            printf("At time %d process %d finished arr %d total %d remain 0 wait %d TA %d WTA %d\n", getClk(),
+                   running.id, running.arrivalTime, running.executaionTime, (getClk() - running.arrivalTime) - running.executaionTime + 1,
+                   getClk() - running.arrivalTime, (getClk() - running.arrivalTime) / running.executaionTime);
+            *shmId = -1;
+            quantumCnt = quantum;
+        }
+
+        if (!isEmpty(q) && (*shmId <= 0 || quantumCnt == 0))
+        {
+            quantumCnt = quantum;
+
+            // stop current running process
+            if (*shmId != -1)
+            {
+                running.remainingTime = *shmId;
+                enqueue(q, running);
+                *shmId = -1;
+
+                kill(running.pid, SIGSTOP);
+                printf("At time %d process %d stopped arr %d total %d remain %d wait %d\n",
+                       getClk(), running.id, running.arrivalTime, running.executaionTime,
+                       running.remainingTime, getClk() - running.arrivalTime);
+            }
+
+            Process top = dequeue(q);
+
+            *shmId = top.remainingTime + 1;
+            running = top;
+
+            if (top.remainingTime < top.executaionTime)
+            {
+                kill(running.pid, SIGCONT);
+                printf("At time %d process %d resumed arr %d total %d remain %d wait %d\n\n",
+                       getClk(), running.id, running.arrivalTime, running.executaionTime,
+                       running.remainingTime, getClk() - running.arrivalTime);
+            }
+            else
+            {
+                running.pid = fork();
+
+                if (running.pid == 0)
+                {
+                    printf("At time %d process %d started arr %d total %d remain %d wait %d\n\n",
+                           getClk(), running.id, running.arrivalTime, running.executaionTime,
+                           running.executaionTime, getClk() - running.arrivalTime);
+
+                    compileAndRun("process", NULL, NULL);
+                }
+            }
+        }
+
+        while (lastSecond == getClk())
+            ;
+        lastSecond = getClk();
+    }
+
+    *terminate = true;
+    printf("Nice work Made with love ❤\n");
 }

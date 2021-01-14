@@ -28,6 +28,7 @@ int main(int argc, char *argv[])
         fscanf(input, "%d", &(processes[index].priority));
         strcpy(processes[index].text, "not End");
         processes[index].lastProcess = false;
+        processes[index].remainingTime = processes[index].executaionTime;
         if (index == numberOfProcesses - 1)
             processes[index].lastProcess = true;
         index++;
@@ -50,9 +51,9 @@ int main(int argc, char *argv[])
     /* 3. Initiate and create the scheduler and clock processes.
      *   Note: look at compileAndRun funciton in the header. (just send the file name without .c)
     */
-    printf("shm terminate id\n" );
+    printf("shm terminate id\n");
     msqProcessId = initMsgq(msqProcessKey);
-    terminate = (int *)initShm(terminateKey,&shmTerminateId);
+    terminate = (int *)initShm(terminateKey, &shmTerminateId);
     *terminate = false;
     int clkID = fork();
     if (clkID == 0)
