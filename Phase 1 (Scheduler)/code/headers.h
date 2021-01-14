@@ -109,15 +109,16 @@ Process receiveMessage(int msgqId)
     process = message.process;
     if (rec_val == -1)
         perror("Error in receive");
-    else if (strcmp(process.text, "End"))
-        printf("Message received: %s clk %d\n", process.text, getClk());
+    // else if (strcmp(process.text, "End"))
+    //     printf("Message received: %s clk %d\n", process.text, getClk());
     return process;
 }
 
-void *initShm(char key, void *shmaddr)
+void *initShm(char key, int *id)
 {
     key_t shmKey = ftok("keyfile", key);
     int shmId = shmget(shmKey, 4096, 0666 | IPC_CREAT);
+    *id = shmId;
 
     if (!~shmId)
     {
@@ -125,8 +126,8 @@ void *initShm(char key, void *shmaddr)
         exit(-1);
     }
 
-    shmaddr = shmat(shmId, (void *)0, 0);
-    return shmaddr;
+    void *addr = shmat(shmId, (void *)0, 0);
+    return addr;
 }
 
 /*

@@ -11,16 +11,17 @@ struct curProcess
 };
 
 int msqProcessId, *shmId, *terminate;
-
+int shmProcessRemainingTimeId, shmTerminateId;
 int main(int argc, char *argv[])
 {
     initClk();
     int algorithm = atoi(argv[0]);
     int quantum = atoi(argv[1]);
+    printf("shm terminate id %d\n", shmTerminateId);
 
     msqProcessId = initMsgq(msqProcessKey);
-    shmId = (int *)initShm(shmProcessKey, shmId);
-    terminate = (int *)initShm(terminateKey, terminate);
+    shmId = (int *)initShm(shmProcessKey, &shmProcessRemainingTimeId);
+    terminate = (int *)initShm(terminateKey, &shmTerminateId);
     *terminate = false;
     switch (algorithm)
     {
@@ -35,6 +36,7 @@ int main(int argc, char *argv[])
         break;
     }
 
+    shmctl(shmProcessRemainingTimeId, IPC_RMID, NULL);
     // TODO: upon termination release the clock resources.
     destroyClk(true);
 }
@@ -83,23 +85,12 @@ void HPF()
                 break;
             else
             {
-                printf("push in queue\n");
-                printf("clk %d\n", getClk());
                 lastProcess = receivedProcess.lastProcess;
                 push(&pq, receivedProcess, receivedProcess.priority);
             }
         }
-        if (*shmId == 0) // the running process has finished
-        {
-            printf("At time %d process %d finished arr %d total %d remain 0 wait %d TA %d WTA %d\n", getClk(),
-                   running.id, running.arrivalTime, running.executaionTime, (getClk() - running.arrivalTime) - running.executaionTime,
-                   getClk() - running.arrivalTime, (getClk() - running.arrivalTime) / running.executaionTime);
-            *shmId = -1;
-        }
-
         if (!isEmptyPQ(&pq) && *shmId == -1)
         {
-            printf("pop from queue\n");
             running = pop(&pq);
             *shmId = running.executaionTime;
             int processID = fork();
@@ -112,9 +103,16 @@ void HPF()
                 compileAndRun("process", NULL, NULL);
             }
         }
+        if (*shmId == 0) // the running process has finished
+        {
+            printf("At time %d process %d finished arr %d total %d remain 0 wait %d TA %d WTA %d\n", getClk(),
+                   running.id, running.arrivalTime, running.executaionTime, (getClk() - running.arrivalTime) - running.executaionTime + 1,
+                   getClk() - running.arrivalTime, (getClk() - running.arrivalTime) / running.executaionTime);
+            *shmId = -1;
+        }
     }
     *terminate = true;
-    printf("Nice work\nMade with love ❤\n");
+    printf("Nice work Made with love ❤\n");
 }
 
 void SRTN()

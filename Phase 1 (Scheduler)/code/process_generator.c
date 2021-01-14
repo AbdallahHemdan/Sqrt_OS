@@ -1,7 +1,8 @@
 #include "headers.h"
 
 void clearResources(int);
-int *terminate;
+int *terminate, msqProcessId;
+int shmTerminateId;
 int main(int argc, char *argv[])
 {
     signal(SIGINT, clearResources);
@@ -49,13 +50,13 @@ int main(int argc, char *argv[])
     /* 3. Initiate and create the scheduler and clock processes.
      *   Note: look at compileAndRun funciton in the header. (just send the file name without .c)
     */
-    int msqProcessId = initMsgq(msqProcessKey);
-    terminate = (int *)initShm(terminateKey, terminate);
+    printf("shm terminate id\n" );
+    msqProcessId = initMsgq(msqProcessKey);
+    terminate = (int *)initShm(terminateKey,&shmTerminateId);
     *terminate = false;
     int clkID = fork();
     if (clkID == 0)
         compileAndRun("clk", NULL, NULL);
-
     int schedID = fork();
     if (schedID == 0)
         compileAndRun("scheduler", args[0], args[1]);
@@ -77,7 +78,7 @@ int main(int argc, char *argv[])
             last = getClk();
             while (processes[index].arrivalTime == x)
             {
-                printf("process generator time %d index %d\n", x, index);
+                //printf("process generator time %d index %d\n", x, index);
                 sendMessage(processes[index], msqProcessId);
                 index++;
             }
@@ -87,10 +88,13 @@ int main(int argc, char *argv[])
         }
     }
     // // 7. Clear clock resources
+    msgctl(msqProcessId, IPC_RMID, (struct msqid_ds *)0);
+    shmctl(shmTerminateId, IPC_RMID, NULL);
     destroyClk(true);
 }
 
 void clearResources(int signum)
 {
-    //TODO
+    msgctl(msqProcessId, IPC_RMID, (struct msqid_ds *)0);
+    shmctl(shmTerminateId, IPC_RMID, NULL);
 }
