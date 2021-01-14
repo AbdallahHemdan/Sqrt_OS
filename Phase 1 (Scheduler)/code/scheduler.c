@@ -30,7 +30,8 @@ int main(int argc, char *argv[])
         RR(quantum);
         break;
     }
-
+    *terminate = true;
+    printf("Nice work Made with love ❤\n");
     shmctl(shmProcessRemainingTimeId, IPC_RMID, NULL);
     // TODO: upon termination release the clock resources.
     destroyClk(true);
@@ -78,17 +79,16 @@ void HPF()
             else
             {
                 lastProcess = receivedProcess.lastProcess;
-                printf("lastProcess: %d\n", lastProcess);
                 push(&pq, receivedProcess, receivedProcess.priority);
             }
         }
 
         if (*shmId == 0) // the running process has finished
         {
-            printf("At time %d process %d finished arr %d total %d remain 0 wait %d TA %d WTA %d\n", getClk(),
+            printf("At time %d process %d finished arr %d total %d remain 0 wait %d TA %d WTA %.2f\n", getClk(),
                    running.id, running.arrivalTime, running.executaionTime,
                    (getClk() - running.arrivalTime) - running.executaionTime,
-                   getClk() - running.arrivalTime, (getClk() - running.arrivalTime) / running.executaionTime);
+                   getClk() - running.arrivalTime, (getClk() - running.arrivalTime) * 1.0 / running.executaionTime);
             *shmId = -1;
         }
 
@@ -113,9 +113,6 @@ void HPF()
 
         lastSecond = getClk();
     }
-
-    *terminate = true;
-    printf("Nice work Made with love ❤\n");
 }
 
 void SRTN()
@@ -156,9 +153,9 @@ void SRTN()
 
         if (*shmId == 0) // the running process has finished
         {
-            printf("At time %d process %d finished arr %d total %d remain 0 wait %d TA %d WTA %d\n", getClk(),
-                   running.id, running.arrivalTime, running.executaionTime, (getClk() - running.arrivalTime) - running.executaionTime + 1,
-                   getClk() - running.arrivalTime, (getClk() - running.arrivalTime) / running.executaionTime);
+            printf("At time %d process %d finished arr %d total %d remain 0 wait %d TA %d WTA %.2f\n", getClk(),
+                   running.id, running.arrivalTime, running.executaionTime, (getClk() - running.arrivalTime) - running.executaionTime,
+                   getClk() - running.arrivalTime, (getClk() - running.arrivalTime) * 1.0 / running.executaionTime);
             *shmId = -1;
         }
 
@@ -175,7 +172,7 @@ void SRTN()
                 kill(running.pid, SIGSTOP);
                 printf("At time %d process %d stopped arr %d total %d remain %d wait %d\n",
                        getClk(), running.id, running.arrivalTime, running.executaionTime,
-                       running.remainingTime, getClk() - running.arrivalTime);
+                       running.remainingTime, getClk() - running.arrivalTime - (running.executaionTime - running.remainingTime));
 
                 while (lastSecond == getClk())
                     ;
@@ -188,18 +185,18 @@ void SRTN()
                 *shmId = top.remainingTime + 1;
                 running = top;
 
-                if (top.remainingTime < top.executaionTime)
+                if (top.remainingTime < top.executaionTime) //Cont
                 {
                     kill(running.pid, SIGCONT);
                     printf("At time %d process %d resumed arr %d total %d remain %d wait %d\n",
                            getClk(), running.id, running.arrivalTime, running.executaionTime,
-                           running.remainingTime, getClk() - running.arrivalTime);
+                           running.remainingTime, getClk() - running.arrivalTime - (running.executaionTime - running.remainingTime));
                 }
                 else
                 {
                     running.pid = fork();
 
-                    if (running.pid == 0)
+                    if (running.pid == 0) // start a new process
                     {
                         printf("At time %d process %d started arr %d total %d remain %d wait %d\n",
                                getClk(), running.id, running.arrivalTime, running.executaionTime,
@@ -220,9 +217,6 @@ void SRTN()
 
         lastSecond = getClk();
     }
-
-    *terminate = true;
-    printf("Nice work Made with love ❤\n");
 }
 
 void RR(int quantum)
@@ -267,9 +261,10 @@ void RR(int quantum)
 
         if (*shmId == 0) // the running process has finished
         {
-            printf("At time %d process %d finished arr %d total %d remain 0 wait %d TA %d WTA %d\n", getClk(),
-                   running.id, running.arrivalTime, running.executaionTime, (getClk() - running.arrivalTime) - running.executaionTime + 1,
-                   getClk() - running.arrivalTime, (getClk() - running.arrivalTime) / running.executaionTime);
+            printf("At time %d process %d finished arr %d total %d remain 0 wait %d TA %d WTA %.2f\n", getClk(),
+                   running.id, running.arrivalTime, running.executaionTime,
+                   (getClk() - running.arrivalTime) - running.executaionTime,
+                   getClk() - running.arrivalTime, (getClk() - running.arrivalTime) * 1.0 / running.executaionTime);
             *shmId = -1;
             quantumCnt = quantum;
         }
@@ -288,7 +283,7 @@ void RR(int quantum)
                 kill(running.pid, SIGSTOP);
                 printf("At time %d process %d stopped arr %d total %d remain %d wait %d\n",
                        getClk(), running.id, running.arrivalTime, running.executaionTime,
-                       running.remainingTime, getClk() - running.arrivalTime);
+                       running.remainingTime, getClk() - running.arrivalTime - (running.executaionTime - running.remainingTime));
             }
 
             Process top = dequeue(q);
@@ -296,18 +291,18 @@ void RR(int quantum)
             *shmId = top.remainingTime + 1;
             running = top;
 
-            if (top.remainingTime < top.executaionTime)
+            if (top.remainingTime < top.executaionTime) //cont
             {
                 kill(running.pid, SIGCONT);
                 printf("At time %d process %d resumed arr %d total %d remain %d wait %d\n\n",
                        getClk(), running.id, running.arrivalTime, running.executaionTime,
-                       running.remainingTime, getClk() - running.arrivalTime);
+                       running.remainingTime, getClk() - running.arrivalTime - (running.executaionTime - running.remainingTime));
             }
             else
             {
                 running.pid = fork();
 
-                if (running.pid == 0)
+                if (running.pid == 0) //start
                 {
                     printf("At time %d process %d started arr %d total %d remain %d wait %d\n\n",
                            getClk(), running.id, running.arrivalTime, running.executaionTime,
@@ -322,7 +317,4 @@ void RR(int quantum)
             ;
         lastSecond = getClk();
     }
-
-    *terminate = true;
-    printf("Nice work Made with love ❤\n");
 }
