@@ -1,7 +1,7 @@
 #include "headers.h"
 
 void clearResources(int);
-
+int *terminate;
 int main(int argc, char *argv[])
 {
     signal(SIGINT, clearResources);
@@ -25,6 +25,8 @@ int main(int argc, char *argv[])
         fscanf(input, "%d", &(processes[index].arrivalTime));
         fscanf(input, "%d", &(processes[index].executaionTime));
         fscanf(input, "%d", &(processes[index].priority));
+        strcpy(processes[index].text, "not End");
+        processes[index].lastProcess = false;
         if (index == numberOfProcesses - 1)
             processes[index].lastProcess = true;
         index++;
@@ -48,13 +50,15 @@ int main(int argc, char *argv[])
      *   Note: look at compileAndRun funciton in the header. (just send the file name without .c)
     */
     int msqProcessId = initMsgq(msqProcessKey);
+    terminate = (int *)initShm(terminateKey, terminate);
+    *terminate = false;
+    int clkID = fork();
+    if (clkID == 0)
+        compileAndRun("clk", NULL, NULL);
 
     int schedID = fork();
     if (schedID == 0)
         compileAndRun("scheduler", args[0], args[1]);
-    int clkID = fork();
-    if (clkID == 0)
-        compileAndRun("clk", NULL, NULL);
 
     // 4. Use this function after creating the clock process to initialize clock
     initClk();
@@ -64,7 +68,7 @@ int main(int argc, char *argv[])
     // // 6. Send the information to the scheduler at the appropriate time.
     index = 0;
     int last = -1;
-    while (true)
+    while (!(*terminate))
     {
         int x = getClk();
         //printf("current time is %d\n", x);
@@ -73,7 +77,7 @@ int main(int argc, char *argv[])
             last = getClk();
             while (processes[index].arrivalTime == x)
             {
-                printf("here\n");
+                printf("process generator time %d index %d\n", x, index);
                 sendMessage(processes[index], msqProcessId);
                 index++;
             }
@@ -81,7 +85,6 @@ int main(int argc, char *argv[])
             strcpy(end.text, "End");
             sendMessage(end, msqProcessId);
         }
-        // TODO termination condition
     }
     // // 7. Clear clock resources
     destroyClk(true);
@@ -89,5 +92,5 @@ int main(int argc, char *argv[])
 
 void clearResources(int signum)
 {
-    //TODO Clears all resources in case of interruption
+    //TODO
 }

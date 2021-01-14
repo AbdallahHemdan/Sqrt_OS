@@ -22,9 +22,9 @@ typedef short bool;
 
 // ============================== //
 // don't mess with this variables //
-
-int *shmaddr; //
+int *shmaddr;
 char msqProcessKey = 'M';
+char terminateKey = 'K';
 char shmProcessKey = 'S';
 
 struct Process
@@ -34,6 +34,13 @@ struct Process
     int executaionTime, remainingTime, arrivalTime, waitingTime, priority, id, pid;
 };
 typedef struct Process Process;
+
+struct Message
+{
+    Process process;
+    int mtype;
+};
+typedef struct Message Message;
 
 // =============================== //
 
@@ -87,8 +94,9 @@ int initMsgq(char key)
 
 void sendMessage(Process process, int msgqId)
 {
-    int send_val = msgsnd(msgqId, &process, sizeof(process.text), !IPC_NOWAIT);
-
+    Message message;
+    message.process = process;
+    int send_val = msgsnd(msgqId, &message, sizeof(message.process), !IPC_NOWAIT);
     if (send_val == -1)
         perror("Error in sending the process");
 }
@@ -96,20 +104,17 @@ void sendMessage(Process process, int msgqId)
 Process receiveMessage(int msgqId)
 {
     Process process;
-
-    int rec_val = msgrcv(msgqId, &process, sizeof(process.text), 0, !IPC_NOWAIT);
-
-    printf("%s\n", process.text);
-
+    Message message;
+    int rec_val = msgrcv(msgqId, &message, sizeof(message.process), 0, !IPC_NOWAIT);
+    process = message.process;
     if (rec_val == -1)
         perror("Error in receive");
-    else
-        printf("Message received: %s\n", process.text);
-
+    else if (strcmp(process.text, "End"))
+        printf("Message received: %s clk %d\n", process.text, getClk());
     return process;
 }
 
-void *initShm(char key)
+void *initShm(char key, void *shmaddr)
 {
     key_t shmKey = ftok("keyfile", key);
     int shmId = shmget(shmKey, 4096, 0666 | IPC_CREAT);
@@ -120,7 +125,7 @@ void *initShm(char key)
         exit(-1);
     }
 
-    void *shmaddr = shmat(shmId, (void *)0, 0);
+    shmaddr = shmat(shmId, (void *)0, 0);
     return shmaddr;
 }
 
@@ -247,11 +252,8 @@ void initializePQ(Node **head)
 void push(Node **head, Process d, int p)
 {
     Node *temp = newNode(d, p);
-
     if ((*head) == NULL) // Insert in empty queue
-    {
         (*head) = temp;
-    }
     else if ((*head)->priority > p) // Insert New Node before head
     {
         temp->next = *head;
@@ -262,10 +264,7 @@ void push(Node **head, Process d, int p)
         Node *start = (*head);
 
         while (start->next != NULL && start->next->priority < p)
-        {
             start = start->next;
-        }
-
         temp->next = start->next;
         start->next = temp;
     }
@@ -277,7 +276,6 @@ Process pop(Node **head)
     Process ret = (*head)->data;
     (*head) = (*head)->next;
     free(temp);
-
     return ret;
 }
 

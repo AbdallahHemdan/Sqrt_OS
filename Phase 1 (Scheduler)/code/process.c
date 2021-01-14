@@ -1,7 +1,7 @@
 #include "headers.h"
 
 /* Modify this file as needed*/
-int *remainingtime, *shmId;
+int *remainingtime;
 
 int main(int agrc, char *argv[])
 {
@@ -9,16 +9,16 @@ int main(int agrc, char *argv[])
 
     //TODO it needs to get the remaining time from somewhere
 
-    *shmId = (int *)initShm(shmProcessKey);
-
-    remainingtime = *shmId;
+    remainingtime = (int *)initShm(shmProcessKey, remainingtime);
     int last = -1; // -1 => just to enter in the first time
-    while (remainingtime > 0)
+    while (*remainingtime > 0)
     {
-        if (last != getclk())
+        while (last == getClk())
+            ;
+        if (last != getClk())
         {
-            remainingtime--;
-            last = getclk();
+            (*remainingtime)--;
+            last = getClk();
         }
     }
 
