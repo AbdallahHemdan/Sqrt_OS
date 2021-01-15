@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
     shmId = (int *)initShm(shmProcessKey, &shmProcessRemainingTimeId);
     terminate = (int *)initShm(terminateKey, &shmTerminateId);
     *terminate = false;
-    fprintf(schedularFile, "At time x process y started arr w total z remain y wait k\n");
+    fprintf(schedularFile, "#At time x process y state arr w total z remain y wait k\n");
     switch (algorithm)
     {
     case 1:
@@ -73,13 +73,11 @@ int startProcess(Process running)
     running.pid = fork();
 
     if (running.pid == 0) // start a new process
-    {
-        fprintf(schedularFile, "At time %d process %d started arr %d total %d remain %d wait %d\n",
-                getClk(), running.id, running.arrivalTime, running.executaionTime,
-                running.executaionTime, getClk() - running.arrivalTime);
-
         compileAndRun("process", NULL, NULL);
-    }
+
+    fprintf(schedularFile, "At time %d process %d started arr %d total %d remain %d wait %d\n",
+            getClk(), running.id, running.arrivalTime, running.executaionTime,
+            running.executaionTime, getClk() - running.arrivalTime);
     return running.pid;
 }
 
@@ -211,10 +209,6 @@ void SRTN()
                 running.remainingTime = *shmId;
                 push(&pq, running, running.remainingTime);
                 stopProcess(running);
-                while (lastSecond == getClk())
-                    ;
-
-                lastSecond = getClk();
             }
 
             if (*shmId == -1)
