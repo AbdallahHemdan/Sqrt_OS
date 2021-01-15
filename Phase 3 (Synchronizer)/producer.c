@@ -24,6 +24,7 @@ union Semun
     struct seminfo *__buf; /* buffer for IPC_INFO */
     void *__pad;
 };
+struct shmid_ds status_buffer;
 
 void down(int sem, int sum_num)
 {
@@ -90,25 +91,15 @@ short existedIdx = 0;
 void *initShm(char key, int *id)
 {
     key_t shmKey = ftok("keyfile", key);
-    int shmId = shmget(shmKey, 4096, 0666);
-
-    *id = shmId;
+    int shmId = shmget(shmKey, sizeof(int) * BUFFERSIZE, IPC_CREAT | 0666);
 
     if (!~shmId)
     {
-        shmId = shmget(shmKey, 4096, 0666 | IPC_CREAT);
-        if (!~shmId)
-        {
-            perror("Error in creating of shared memory");
-            exit(-1);
-        }
-    }
-    else
-    {
-        printf("existed shared memory\n");
-        existedIdx = 1;
+        perror("cannot create shared memory\n");
+        exit(-1);
     }
 
+    *id = shmId;
     void *addr = shmat(shmId, (void *)0, 0);
     return addr;
 }
@@ -119,42 +110,41 @@ void clearResources(int sigNum);
 // producer sem: number of empty places
 // consumer sem: number of existed items
 
-int memorySem, producerSem, consumerSem, bufferMemory, idxMemory;
+int memorySem, producerSem, consumerSem, bufferMemory, idxMemory, idxSem;
 
 int main()
 {
     signal(SIGINT, clearResources);
 
     memorySem = initSem('m', 1, 1); // binary semaphore
+    idxSem = initSem('s', 1, 1);    // binary semaphore
     producerSem = initSem('p', BUFFERSIZE, 1);
     consumerSem = initSem('c', BUFFERSIZE, 0);
-    int *bufferAddr = initShm('b', &bufferMemory), item = 0;
+
+    int *bufferAddr = initShm('b', &bufferMemory);
+    int status = shmctl(bufferMemory, IPC_STAT, &status_buffer);
+    int item = (status_buffer.shm_nattch - 1) * 100;
+
     int *idx = initShm('i', &idxMemory);
-
-    if (!existedIdx)
-    {
-        *idx = 0;
-        item = 100;
-    }
-
-    memset(bufferAddr, 0, sizeof(int) * BUFFERSIZE);
+    status = shmctl(idxMemory, IPC_STAT, &status_buffer);
+    int semNum = status_buffer.shm_nattch;
 
     while (1)
     {
+        down(idxSem, 0);
         down(producerSem, *idx);
         down(memorySem, 0);
 
         // produce an item and write it to the buffer
         buffer[*idx] = item++;
         bufferAddr[*idx] = buffer[*idx];
-        printf("produce item: %d - idx: %d\n", bufferAddr[*idx], *idx);
-
-        up(memorySem, 0);
-        up(consumerSem, *idx);
+        printf("producer %d, produced item: %d \n", semNum, bufferAddr[*idx]);
 
         *idx = ((*idx) + 1) % BUFFERSIZE;
 
-        sleep(2);
+        up(memorySem, 0);
+        up(consumerSem, ((*idx) - 1 + BUFFERSIZE) % BUFFERSIZE);
+        up(idxSem, 0);
     }
 
     clearResources(SIGINT);
@@ -163,13 +153,10 @@ int main()
 
 void clearResources(int sigNum)
 {
-    system("ipcrm -a");
-    // semctl(memorySem, 0, IPC_RMID);
-    // semctl(producerSem, 0, IPC_RMID);
-    // semctl(consumerSem, 0, IPC_RMID);
-
-    // shmctl(idxMemory, IPC_RMID, (struct shmid_ds *)0);
-    // shmctl(bufferMemory, IPC_RMID, (struct shmid_ds *)0);
+    int status = shmctl(bufferMemory, IPC_STAT, &status_buffer);
+    if (status_buffer.shm_nattch == 1)
+        system("ipcrm -a");
 
     signal(SIGINT, SIG_DFL);
+    kill(getpid(), SIGINT);
 }

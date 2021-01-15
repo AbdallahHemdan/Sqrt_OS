@@ -21,6 +21,43 @@ union Semun
     void *__pad;
 };
 
+// struct shmid_ds buff_status;
+// int createShmem(int key)
+// {
+//     int shmid = shmget(key, sizeof(struct Buffer), IPC_CREAT | 0666);
+
+//     if (shmid == -1)
+//     {
+//         perror("Error in creating the shared memory @ Producer:(\n");
+//         exit(-1);
+//     }
+
+//     buf = shmat(shmid, (void *)0, 0);
+//     if (buf == (struct Buffer*)-1)
+//     {
+//         perror("Error in attach @ Producer :(\n");
+//         exit(-1);
+//     }
+//     /*critecal section*/
+//     down(mutex_sem_id);
+//     int status = shmctl(shmid, IPC_STAT, &buff_status);
+//     while (status == -1)
+//     {
+//         printf("Failed to ge status, try again\n");
+//         status = shmctl(shmid, IPC_STAT, &buff_status);
+//     }
+//     /*if this process is the first to attach then make it initialize the memory*/
+//     if(buff_status.shm_nattch == 1)
+//     {
+//         printf("Initialize the memory\n");
+//         buf->next_add=0;
+//         buf->next_rem=0;
+//     }
+//     up(mutex_sem_id);
+//     /*critecal section*/
+//     return shmid;
+// }
+
 void down(int sem, int sum_num)
 {
     struct sembuf p_op;
@@ -77,16 +114,31 @@ int initSem(char keyNum, int size, int initial_value)
     return semId;
 }
 
+void *initShm(char key, int *id)
+{
+    key_t shmKey = ftok("keyfile", key);
+    int shmId = shmget(shmKey, sizeof(int) * 10, IPC_CREAT | 0666);
+
+    if (!~shmId)
+    {
+        printf("doesn't exist shared memory\n");
+    }
+    // else
+    // {
+    //     shmId = shmget(shmKey, 4096, 0666 | IPC_CREAT);
+    // }
+    *id = shmId;
+
+    void *addr = shmat(shmId, (void *)0, 0);
+    return addr;
+}
+
 int main()
 {
-    int semId = initSem('t', 1, 0);
-
-    up(semId, 0);
-    up(semId, 0);
-    up(semId, 0);
-    up(semId, 0);
-    up(semId, 0);
-    printf("ds");
-    semctl(semId, 0, IPC_RMID);
+    int id;
+    int *a = initShm('a', &id);
+    a[2] = 5;
+    int *a2 = initShm('a', &id);
+    printf("%d %d\n", a[2], a2[2]);
     return 0;
 }
