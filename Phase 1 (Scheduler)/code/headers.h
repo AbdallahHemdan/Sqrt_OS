@@ -133,6 +133,74 @@ void *initShm(char key, int *id)
     return addr;
 }
 
+union Semun
+{
+    int val;               /* value for SETVAL */
+    struct semid_ds *buf;  /* buffer for IPC_STAT & IPC_SET */
+    ushort *array;         /* array for GETALL & SETALL */
+    struct seminfo *__buf; /* buffer for IPC_INFO */
+    void *__pad;
+};
+struct shmid_ds status_buffer;
+
+void down(int sem)
+{
+    struct sembuf p_op;
+
+    p_op.sem_num = 0;
+    p_op.sem_op = -1;
+    p_op.sem_flg = !IPC_NOWAIT;
+
+    if (semop(sem, &p_op, 1) == -1)
+    {
+        perror("Error in down()");
+        exit(-1);
+    }
+}
+
+void up(int sem)
+{
+    struct sembuf v_op;
+
+    v_op.sem_num = 0;
+    v_op.sem_op = 1;
+    v_op.sem_flg = !IPC_NOWAIT;
+
+    if (semop(sem, &v_op, 1) == -1)
+    {
+        perror("Error in up()");
+        exit(-1);
+    }
+}
+
+union Semun semun;
+
+int initSem(char keyNum)
+{
+    int semKey = ftok("keyfile", keyNum);
+    int semId = semget(semKey, 1, 0666);
+
+    if (semId == -1)
+    {
+        semId = semget(semKey, 1, 0666 | IPC_CREAT);
+
+        if (semId == -1)
+        {
+            perror("Error in create sem");
+            exit(-1);
+        }
+
+        semun.val = 1; /* initial value of the semaphore, Binary semaphore */
+        if (semctl(semId, 0, SETVAL, semun) == -1)
+        {
+            perror("Error in semctl");
+            exit(-1);
+        }
+    }
+
+    return semId;
+}
+
 /*
  * All process call this function at the end to release the communication
  * resources between them and the clock module.

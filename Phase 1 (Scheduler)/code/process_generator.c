@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
         strcpy(processes[index].text, "not End");
         processes[index].lastProcess = false;
         processes[index].remainingTime = processes[index].executionTime;
+        processes[index].arrivalTime++;
         if (index == numberOfProcesses - 1)
             processes[index].lastProcess = true;
         index++;
@@ -57,18 +58,19 @@ int main(int argc, char *argv[])
     int clkID = fork();
     if (clkID == 0)
         compileAndRun("clk", NULL, NULL);
+
     int schedID = fork();
     if (schedID == 0)
         compileAndRun("scheduler", args[0], args[1]);
 
     // 4. Use this function after creating the clock process to initialize clock
-    initClk();
 
     // // TODO Generation Main Loop
     // // 5. Create a data structure for processes and provide it with its parameters.
     // // 6. Send the information to the scheduler at the appropriate time.
     index = 0;
     int last = -1;
+    initClk();
     while (!(*terminate))
     {
         int x = getClk();

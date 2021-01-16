@@ -7,7 +7,7 @@ void RR();
 
 int shmProcessRemainingTimeId, shmTerminateId, msqProcessId, *shmId, *terminate;
 double sumWTA = 0, sumWait = 0, cpu, std = 0, sumExecution = 0, finishTime;
-int idle = 0, count = 0;
+int idle = 0, count = 0, remainingTimeSem;
 bool lastProcess = 0;
 void clearResources(int);
 lNode *processesWTA;
@@ -22,11 +22,14 @@ int main(int argc, char *argv[])
     int algorithm = atoi(argv[0]);
     int quantum = atoi(argv[1]);
 
+    remainingTimeSem = initSem('p');
+
     msqProcessId = initMsgq(msqProcessKey);
     shmId = (int *)initShm(shmProcessKey, &shmProcessRemainingTimeId);
     terminate = (int *)initShm(terminateKey, &shmTerminateId);
-    *terminate = false;
+
     fprintf(schedularFile, "#At time x process y state arr w total z remain y wait k\n");
+    *terminate = false;
     switch (algorithm)
     {
     case 1:
@@ -77,8 +80,8 @@ int startProcess(Process running)
         compileAndRun("process", NULL, NULL);
 
     fprintf(schedularFile, "At time %d process %d started arr %d total %d remain %d wait %d\n",
-            getClk(), running.id, running.arrivalTime, running.executionTime,
-            running.executionTime, getClk() - running.arrivalTime);
+            (getClk() - 1), running.id, (running.arrivalTime - 1), running.executionTime,
+            running.executionTime, (getClk() - 1) - (running.arrivalTime - 1));
     return running.pid;
 }
 
@@ -86,28 +89,28 @@ void continueProcess(Process running)
 {
     kill(running.pid, SIGCONT);
     fprintf(schedularFile, "At time %d process %d resumed arr %d total %d remain %d wait %d\n",
-            getClk(), running.id, running.arrivalTime, running.executionTime,
-            running.remainingTime, getClk() - running.arrivalTime - (running.executionTime - running.remainingTime));
+            (getClk() - 1), running.id, (running.arrivalTime - 1), running.executionTime,
+            running.remainingTime, (getClk() - 1) - (running.arrivalTime - 1) - (running.executionTime - running.remainingTime));
 }
 
 void stopProcess(Process running)
 {
     *shmId = -1;
-
+    //up(remainingTimeSem);
     kill(running.pid, SIGSTOP);
     fprintf(schedularFile, "At time %d process %d stopped arr %d total %d remain %d wait %d\n",
-            getClk(), running.id, running.arrivalTime, running.executionTime,
-            running.remainingTime, getClk() - running.arrivalTime - (running.executionTime - running.remainingTime));
+            (getClk() - 1), running.id, (running.arrivalTime - 1), running.executionTime,
+            running.remainingTime, (getClk() - 1) - (running.arrivalTime - 1) - (running.executionTime - running.remainingTime));
 }
 
 void finishProcess(Process running)
 {
-    finishTime = getClk();
-    double WTA = (getClk() - running.arrivalTime) * 1.0 / running.executionTime;
-    int wait = (getClk() - running.arrivalTime) - running.executionTime;
-    fprintf(schedularFile, "At time %d process %d finished arr %d total %d remain 0 wait %d TA %d WTA %.2f\n", getClk(),
-            running.id, running.arrivalTime, running.executionTime,
-            wait, getClk() - running.arrivalTime, WTA);
+    finishTime = (getClk() - 1);
+    double WTA = ((getClk() - 1) - (running.arrivalTime - 1)) * 1.0 / running.executionTime;
+    int wait = ((getClk() - 1) - (running.arrivalTime - 1)) - running.executionTime;
+    fprintf(schedularFile, "At time %d process %d finished arr %d total %d remain 0 wait %d TA %d WTA %.2f\n", (getClk() - 1),
+            running.id, (running.arrivalTime - 1), running.executionTime,
+            wait, (getClk() - 1) - (running.arrivalTime - 1), WTA);
     insert(&processesWTA, WTA);
     sumWTA += WTA;
     sumWait += wait;
@@ -190,13 +193,13 @@ void SRTN()
     // 1. declare all needed variables
     Node *pq;
     Process running;
-    int lastSecond = -1;
 
     // 2. initialization
     *shmId = -1;
     initializePQ(&pq);
     running.remainingTime = 0;
-
+    int lastSecond = getClk();
+    printf("last second %d\n", lastSecond);
     /* 3. start working with processes
      *  3.1 check every second if there is new processes (consuming)
      *  3.2 push the new processes if there is any
@@ -205,7 +208,7 @@ void SRTN()
     while (!(lastProcess && isEmptyPQ(&pq) && *shmId == -1))
     {
         pushReadyQueue(&pq, NULL, 0, 0);
-
+        //down(remainingTimeSem);
         if (*shmId == 0) // the running process has finished
             finishProcess(running);
 
@@ -222,20 +225,24 @@ void SRTN()
 
             if (*shmId == -1)
             {
-                *shmId = top.remainingTime + 1;
                 running = top;
+                *shmId = top.remainingTime;
 
                 if (top.remainingTime < top.executionTime) //Cont
+                {
                     continueProcess(running);
+                }
                 else
+                {
                     running.pid = startProcess(running);
+                }
             }
             else // push it again into the pq
             {
                 push(&pq, top, top.remainingTime);
             }
         }
-
+        //up(remainingTimeSem);
         nextSecondWaiting(&lastSecond);
     }
 }
