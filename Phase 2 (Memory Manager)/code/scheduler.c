@@ -75,8 +75,8 @@ int startProcess(Process running)
     if (running.pid == 0) // start a new process
     {
         fprintf(schedularFile, "At time %d process %d started arr %d total %d remain %d wait %d\n",
-                getClk(), running.id, running.arrivalTime, running.executaionTime,
-                running.executaionTime, getClk() - running.arrivalTime);
+                getClk(), running.id, running.arrivalTime, running.executionTime,
+                running.executionTime, getClk() - running.arrivalTime);
 
         compileAndRun("process", NULL, NULL);
     }
@@ -87,8 +87,8 @@ void continueProcess(Process running)
 {
     kill(running.pid, SIGCONT);
     fprintf(schedularFile, "At time %d process %d resumed arr %d total %d remain %d wait %d\n",
-            getClk(), running.id, running.arrivalTime, running.executaionTime,
-            running.remainingTime, getClk() - running.arrivalTime - (running.executaionTime - running.remainingTime));
+            getClk(), running.id, running.arrivalTime, running.executionTime,
+            running.remainingTime, getClk() - running.arrivalTime - (running.executionTime - running.remainingTime));
 }
 
 void stopProcess(Process running)
@@ -97,22 +97,22 @@ void stopProcess(Process running)
 
     kill(running.pid, SIGSTOP);
     fprintf(schedularFile, "At time %d process %d stopped arr %d total %d remain %d wait %d\n",
-            getClk(), running.id, running.arrivalTime, running.executaionTime,
-            running.remainingTime, getClk() - running.arrivalTime - (running.executaionTime - running.remainingTime));
+            getClk(), running.id, running.arrivalTime, running.executionTime,
+            running.remainingTime, getClk() - running.arrivalTime - (running.executionTime - running.remainingTime));
 }
 
 void finishProcess(Process running)
 {
     finishTime = getClk();
-    double WTA = (getClk() - running.arrivalTime) * 1.0 / running.executaionTime;
-    int wait = (getClk() - running.arrivalTime) - running.executaionTime;
+    double WTA = (getClk() - running.arrivalTime) * 1.0 / running.executionTime;
+    int wait = (getClk() - running.arrivalTime) - running.executionTime;
     fprintf(schedularFile, "At time %d process %d finished arr %d total %d remain 0 wait %d TA %d WTA %.2f\n", getClk(),
-            running.id, running.arrivalTime, running.executaionTime,
+            running.id, running.arrivalTime, running.executionTime,
             wait, getClk() - running.arrivalTime, WTA);
     insert(&processesWTA, WTA);
     sumWTA += WTA;
     sumWait += wait;
-    sumExecution += running.executaionTime;
+    sumExecution += running.executionTime;
     count++;
     *shmId = -1;
 }
@@ -166,7 +166,7 @@ void HPF()
         if (!isEmptyPQ(&pq) && *shmId == -1)
         {
             running = pop(&pq);
-            *shmId = running.executaionTime + 1;
+            *shmId = running.executionTime + 1;
             running.pid = startProcess(running);
         }
 
@@ -222,7 +222,7 @@ void SRTN()
                 *shmId = top.remainingTime + 1;
                 running = top;
 
-                if (top.remainingTime < top.executaionTime) //Cont
+                if (top.remainingTime < top.executionTime) //Cont
                     continueProcess(running);
                 else
                     running.pid = startProcess(running);
@@ -289,7 +289,7 @@ void RR(int quantum)
             *shmId = top.remainingTime + 1;
             running = top;
 
-            if (top.remainingTime < top.executaionTime) //cont
+            if (top.remainingTime < top.executionTime) //cont
                 continueProcess(running);
             else
                 running.pid = startProcess(running);

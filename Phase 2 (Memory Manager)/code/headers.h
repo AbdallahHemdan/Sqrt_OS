@@ -31,7 +31,7 @@ struct Process
 {
     char text[5];              // if "End": this is the last process in this second, else receive more;
     bool running, lastProcess; // lastProcess in the whole program
-    int executaionTime, remainingTime, arrivalTime, waitingTime, priority, id, pid;
+    int executionTime, remainingTime, arrivalTime, waitingTime, priority, id, pid;
 };
 typedef struct Process Process;
 
