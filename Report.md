@@ -1,4 +1,6 @@
-# <font color='ff8090'>Team 3</font>
+# <font color='ff6c85 '>Team 3</font>
+
+## <font color='008080'>Team members </font>
 
 |      Name      | Sec | BN |
 |:--------------:|:---:|:--:|
@@ -7,7 +9,7 @@
 |  Adel Mohamed  |  1  | 31 |
 | Abdallah Ahmed |  2  | 1  |
 
-## Data structures used
+## <font color='008080'>Data structures used</font>
 
 |   Algo/Part   |       DS       |
 |:-------------:|:--------------:|
@@ -15,11 +17,20 @@
 |  HPF - SRTN   | Priority queue |
 |      RR       |     Queue      |
 
-## Algorithm explanation and results
+## <font color='008080'>Algorithm explanation and results</font>
 
-## Assumptions
+1. Phase 1
+    - *EXP 1*
+    - *Results 1*
+2. Phase 2
+    - *EXP 2*
+    - *Results 2*
 
-## Workload distribution & Time taken
+## <font color='008080'>Assumptions</font>
+
+- *Assumptions*
+
+## <font color='008080'>Workload distribution & Time taken</font>
 
 | Phase |            Workload            | Time (hours) |
 |:-----:|:------------------------------:|:------------:|

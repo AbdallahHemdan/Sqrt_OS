@@ -27,13 +27,13 @@ char msqProcessKey = 'M';
 char terminateKey = 'K';
 char shmProcessKey = 'S';
 
+typedef struct Process Process;
 struct Process
 {
     char text[5];              // if "End": this is the last process in this second, else receive more;
     bool running, lastProcess; // lastProcess in the whole program
-    int executaionTime, remainingTime, arrivalTime, waitingTime, priority, id, pid;
+    int executionTime, remainingTime, arrivalTime, waitingTime, priority, id, pid;
 };
-typedef struct Process Process;
 
 struct Message
 {
@@ -67,6 +67,7 @@ int getClk()
  * All processes call this function at the beginning to establish communication between them and the clock module.
  * Again, remember that the clock is only emulation!
 */
+
 void initClk()
 {
     int shmid = shmget(SHKEY, 4, 0444);
@@ -150,6 +151,17 @@ void destroyClk(bool terminateAll)
     }
 }
 
+/*
+ * Linked-list implementation
+ * we used linked-list to benefit from the dynamic allocation
+ * 
+ * How to initialize it:
+ *      lNode *ls;
+ *      insert(&ls, val);
+ *      extract(&ls);
+ * 
+*/
+
 typedef struct lNode lNode;
 
 struct lNode
@@ -174,11 +186,12 @@ double extract(lNode **head)
     free(temp);
     return val;
 }
+
 /*
  * Queue implementation using linked-list 
  * we used linked-list to make it easy to add a process and remove it
  * 
- * How to initilize it:
+ * How to initialize it:
  *      queue *q;
  *      q = malloc(sizeof(queue));
  *      initialize(q);
@@ -249,7 +262,7 @@ Process dequeue(queue *q)
  * Priority queue using linked-list 
  * 
  * Node* pq;
- * initilize(&pq);
+ * initialize(&pq);
  * push(&pq, 7, 0); 
  * pop(&pq); 
 */

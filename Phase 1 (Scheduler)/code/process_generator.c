@@ -24,11 +24,11 @@ int main(int argc, char *argv[])
     {
         fscanf(input, "%d", &(processes[index].id));
         fscanf(input, "%d", &(processes[index].arrivalTime));
-        fscanf(input, "%d", &(processes[index].executaionTime));
+        fscanf(input, "%d", &(processes[index].executionTime));
         fscanf(input, "%d", &(processes[index].priority));
         strcpy(processes[index].text, "not End");
         processes[index].lastProcess = false;
-        processes[index].remainingTime = processes[index].executaionTime;
+        processes[index].remainingTime = processes[index].executionTime;
         if (index == numberOfProcesses - 1)
             processes[index].lastProcess = true;
         index++;
