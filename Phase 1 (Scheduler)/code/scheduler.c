@@ -1,5 +1,6 @@
 #include "headers.h"
 #include <math.h>
+
 void HPF();
 void SRTN();
 void RR();
@@ -118,7 +119,7 @@ void finishProcess(Process running)
 /*
  * Push the new received processes if there is any 
 */
-void pushReadyQueue(Node **pq, queue **q, bool type)
+void pushReadyQueue(Node **pq, queue **q, bool type, int prioritize)
 {
     Process receivedProcess;
     while (1) // get the new processes
@@ -130,7 +131,7 @@ void pushReadyQueue(Node **pq, queue **q, bool type)
         {
             lastProcess = receivedProcess.lastProcess;
             if (!type)
-                push(pq, receivedProcess, receivedProcess.priority);
+                push(pq, receivedProcess, prioritize == 1 ? receivedProcess.priority : receivedProcess.remainingTime);
             else
                 enqueue(*q, receivedProcess);
         }
@@ -154,7 +155,7 @@ void HPF()
     Process running;
     Node *pq;
 
-    // 2. initilization
+    // 2. initialization
     initializePQ(&pq);
     running.remainingTime = 0;
 
@@ -162,11 +163,11 @@ void HPF()
     /* 3. start working with processes
      *  3.1 check every second if there is new processes (consuming)
      *  3.2 push the new processes if there is any
-     *  3.3 contiune working
+     *  3.3 continue working
     */
     while (!(lastProcess && isEmptyPQ(&pq) && *shmId == -1))
     {
-        pushReadyQueue(&pq, NULL, 0);
+        pushReadyQueue(&pq, NULL, 0, 1);
 
         if (*shmId == 0) // the running process has finished
             finishProcess(running);
@@ -180,8 +181,6 @@ void HPF()
 
         nextSecondWaiting(&lastSecond);
     }
-
-    printf("HPF finished\n");
 }
 
 void SRTN()
@@ -193,7 +192,7 @@ void SRTN()
     Process running;
     int lastSecond = -1;
 
-    // 2. initilization
+    // 2. initialization
     *shmId = -1;
     initializePQ(&pq);
     running.remainingTime = 0;
@@ -201,11 +200,11 @@ void SRTN()
     /* 3. start working with processes
      *  3.1 check every second if there is new processes (consuming)
      *  3.2 push the new processes if there is any
-     *  3.3 contiune working
+     *  3.3 continue working
     */
     while (!(lastProcess && isEmptyPQ(&pq) && *shmId == -1))
     {
-        pushReadyQueue(&pq, NULL, 0);
+        pushReadyQueue(&pq, NULL, 0, 0);
 
         if (*shmId == 0) // the running process has finished
             finishProcess(running);
@@ -239,8 +238,6 @@ void SRTN()
 
         nextSecondWaiting(&lastSecond);
     }
-
-    printf("SRTN finished\n");
 }
 
 void RR(int quantum)
@@ -252,7 +249,7 @@ void RR(int quantum)
     Process running;
     int lastSecond = -1, quantumCnt = 0;
 
-    // 2. initilization
+    // 2. initialization
     *shmId = -1;
     queue *q;
     q = malloc(sizeof(queue));
@@ -262,15 +259,14 @@ void RR(int quantum)
     /* 3. start working with processes
      *  3.1 check every second if there is new processes (consuming)
      *  3.2 push the new processes if there is any
-     *  3.3 contiune working
+     *  3.3 continue working
     */
     while (!(lastProcess && isEmpty(q) && *shmId == -1))
     {
         quantumCnt--;
-        pushReadyQueue(NULL, &q, 1);
+        pushReadyQueue(NULL, &q, 1, 0);
 
-        // the running process has finished
-        if (*shmId == 0)
+        if (*shmId == 0) // the running process has finished
         {
             finishProcess(running);
             quantumCnt = quantum;
@@ -301,8 +297,6 @@ void RR(int quantum)
 
         nextSecondWaiting(&lastSecond);
     }
-
-    printf("RR finished\n");
 }
 
 void clearResources(int signum)

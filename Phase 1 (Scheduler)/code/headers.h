@@ -27,13 +27,13 @@ char msqProcessKey = 'M';
 char terminateKey = 'K';
 char shmProcessKey = 'S';
 
-typedef struct Process Process;
 struct Process
 {
     char text[5];              // if "End": this is the last process in this second, else receive more;
     bool running, lastProcess; // lastProcess in the whole program
     int executionTime, remainingTime, arrivalTime, waitingTime, priority, id, pid;
 };
+typedef struct Process Process;
 
 struct Message
 {
@@ -67,7 +67,6 @@ int getClk()
  * All processes call this function at the beginning to establish communication between them and the clock module.
  * Again, remember that the clock is only emulation!
 */
-
 void initClk()
 {
     int shmid = shmget(SHKEY, 4, 0444);
