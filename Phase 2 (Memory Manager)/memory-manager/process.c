@@ -8,8 +8,8 @@ int main(int agrc, char *argv[])
 {
     initClk();
 
-    remainingtime = (int *)initShm(shmProcessKey, &shmProcessRemainingTimeId);
     int last = -1; // -1 => just to enter in the first time
+    remainingtime = (int *)initShm(shmProcessKey, &shmProcessRemainingTimeId);
 
     while (*remainingtime > 0)
     {

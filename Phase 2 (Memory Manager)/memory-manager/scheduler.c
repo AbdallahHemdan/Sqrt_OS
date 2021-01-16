@@ -1,5 +1,9 @@
 #include "headers.h"
 #include <math.h>
+
+#define BY_PRIORITY 1
+#define BY_REMAINING 0
+
 void HPF();
 void SRTN();
 void RR();
@@ -20,26 +24,30 @@ queue *waitingList;
 
 int main(int argc, char *argv[])
 {
-    schedularFile = fopen("schedular.log", "w");
-    memoryFile = fopen("memory.log", "w");
-    statisticsFile = fopen("schedular.perf", "w");
-    signal(SIGINT, clearResources);
+    printf("\nWasa3 ll bashmohandes el gad3 gad3 gad3: Hussien fadl\n\n");
+
     initClk();
+    signal(SIGINT, clearResources);
+
+    memoryFile = fopen("memory.log", "w");
+    schedularFile = fopen("schedular.log", "w");
+    statisticsFile = fopen("schedular.perf", "w");
+
     int algorithm = atoi(argv[0]);
     int quantum = atoi(argv[1]);
 
     msqProcessId = initMsgq(msqProcessKey);
-    shmId = (int *)initShm(shmProcessKey, &shmProcessRemainingTimeId);
     terminate = (int *)initShm(terminateKey, &shmTerminateId);
-    *terminate = false;
+    shmId = (int *)initShm(shmProcessKey, &shmProcessRemainingTimeId);
 
+    *terminate = false;
     waitingList = malloc(sizeof(queue));
 
     fprintf(memoryFile, "#At time x allocated y bytes for process z from i to j\n");
     fprintf(schedularFile, "#At time x process y started arr w total z remain y wait k\n");
 
     /* Create new instance from buddy algorithm */
-    buddy = buddy_new(64);
+    buddy = buddy_new(1024);
 
     switch (algorithm)
     {
@@ -53,8 +61,8 @@ int main(int argc, char *argv[])
         RR(quantum);
         break;
     }
-    *terminate = true;
 
+    *terminate = true;
     double AVGWTA = sumWTA / count;
     cpu = sumExecution * 100.0 / (finishTime - 1);
 
@@ -69,30 +77,42 @@ int main(int argc, char *argv[])
     fclose(memoryFile);
     fclose(schedularFile);
     fclose(statisticsFile);
+
     printf("Nice work Made with love ❤\n");
     shmctl(shmProcessRemainingTimeId, IPC_RMID, NULL);
+
     destroyClk(true);
+    buddy_destory(buddy);
 }
 
-void pushWaitingToReady(Node **pq, queue **q, bool type, Process current)
+void checkMemoryAndPush(Node **pq, queue **q, bool type, Process receivedProcess, bool prioritize)
 {
-    if (!type)
-        push(pq, current, current.priority);
-    else
-        enqueue(*q, current);
-}
+    /* Start of allocating memory for the process */
+    int tempOffset = buddy_alloc(buddy, receivedProcess.processSize);
 
-void removeFromReady(Node **pq, queue **q, bool type)
-{
-    if (!type && !isEmptyPQ(pq))
+    if (tempOffset != -1)
     {
-        printf("POP from PQ\n");
-        pop(pq);
+        receivedProcess.memOffset = tempOffset;
+
+        int endOffset = ceil(log2(receivedProcess.processSize) * 1.0);
+        endOffset = pow(2, endOffset) - 1;
+
+        if (!type)
+        {
+            push(pq, receivedProcess, prioritize ? receivedProcess.priority : receivedProcess.remainingTime);
+        }
+        else
+        {
+            enqueue(*q, receivedProcess);
+        }
+
+        printf("Allocating: %d, with size = %d\n", receivedProcess.id, receivedProcess.processSize);
+        fprintf(memoryFile, "At time %d allocated %d bytes for process %d from %d to %d\n",
+                getClk(), receivedProcess.processSize, receivedProcess.id, receivedProcess.memOffset, receivedProcess.memOffset + endOffset);
     }
-    else if (type && !isEmpty(*q))
+    else
     {
-        printf("POP from Q\n");
-        dequeue(*q);
+        enqueue(waitingList, receivedProcess);
     }
 }
 
@@ -106,49 +126,42 @@ bool checkNewProcess(Process *newProcess)
     return strcmp((*newProcess).text, "End");
 }
 
-void startProcess(Process *running)
+void pushReadyQueue(Node **pq, queue **q, bool type, bool prioritize)
 {
-    (*running).pid = fork();
+    Process receivedProcess;
 
-    if ((*running).pid == 0) // start a new process
+    // while there are new proecesses in the current second, push them to the ready queue
+    while (1)
+    {
+        bool newProcess = checkNewProcess(&receivedProcess);
+        if (!newProcess)
+            break;
+        else
+        {
+            lastProcess = receivedProcess.lastProcess;
+
+            if (!type)
+                checkMemoryAndPush(pq, NULL, type, receivedProcess, prioritize);
+            else
+                checkMemoryAndPush(NULL, q, type, receivedProcess, prioritize);
+        }
+    }
+}
+
+int startProcess(Process running)
+{
+    running.pid = fork();
+
+    if (running.pid == 0) // start a new process
     {
         compileAndRun("process", NULL, NULL);
     }
 
     fprintf(schedularFile, "At time %d process %d started arr %d total %d remain %d wait %d\n",
-            getClk(), (*running).id, (*running).arrivalTime, (*running).executaionTime,
-            (*running).executaionTime, getClk() - (*running).arrivalTime);
+            getClk(), running.id, running.arrivalTime, running.executaionTime,
+            running.executaionTime, getClk() - running.arrivalTime);
 
-    /* Start of allocating memory for the process */
-    (*running).memOffset = buddy_alloc(buddy, (*running).processSize);
-
-    int endOffset = ceil(log2((*running).processSize) * 1.0);
-    endOffset = pow(2, endOffset) - 1;
-
-    if ((*running).memOffset != -1)
-    {
-        printf("\n\nAllocating: %d,with size = %d\n\n", (*running).id, (*running).processSize);
-        fprintf(memoryFile, "At time %d allocated %d bytes for process %d from %d to %d\n",
-                getClk(), (*running).processSize, (*running).id, (*running).memOffset, (*running).memOffset + endOffset);
-    }
-    else
-    {
-        printf("Add to waiting LIST !!!!!!!!\n");
-        enqueue(waitingList, *running);
-        // pop from ready queue;
-
-        if (!queueType)
-        {
-            removeFromReady(&pq, NULL, queueType);
-        }
-        else
-        {
-            removeFromReady(NULL, &q, queueType);
-        }
-
-        fprintf(memoryFile, "At time %d, there is no memory space for allocation\n", getClk());
-    }
-    /* Start of allocating memory for the process */
+    return running.pid;
 }
 
 void continueProcess(Process running)
@@ -169,7 +182,7 @@ void stopProcess(Process running)
             running.remainingTime, getClk() - running.arrivalTime - (running.executaionTime - running.remainingTime));
 }
 
-void finishProcess(Process running)
+void finishProcess(Process running, bool prioritize)
 {
     finishTime = getClk();
     double WTA = (getClk() - running.arrivalTime) * 1.0 / running.executaionTime;
@@ -179,31 +192,27 @@ void finishProcess(Process running)
             wait, getClk() - running.arrivalTime, WTA);
 
     /*  Start Free memory for the current process */;
-    buddy_dump(buddy);
-
     buddy_free(buddy, running.memOffset);
-    buddy_dump(buddy);
 
     int endOffset = ceil(log2(running.processSize) * 1.0);
     endOffset = pow(2, endOffset) - 1;
 
-    printf("\n\nFreeing: %d,with size = %d\n\n", running.id, running.processSize);
+    printf("Freeing: %d, with size = %d\n", running.id, running.processSize);
     fprintf(memoryFile, "At time %d freed %d bytes from process %d from %d to %d\n",
             getClk(), running.processSize, running.id, running.memOffset, running.memOffset + endOffset);
     /*  End Free memory for the current process */
 
     /* Start Processing of waitling list and add it to current queue */
-    while (!isEmpty(waitingList))
+    int cnt = waitingList->count;
+
+    for (int i = 0; i < cnt; i++)
     {
-        Process current = dequeue(waitingList); 
+        bool inserted;
+        Process current = dequeue(waitingList);
         if (!queueType)
-        {
-            pushWaitingToReady(&pq, NULL, queueType, current);
-        }
+            checkMemoryAndPush(&pq, NULL, queueType, current, prioritize);
         else
-        {
-            pushWaitingToReady(NULL, &q, queueType, current);
-        }
+            checkMemoryAndPush(NULL, &q, queueType, current, prioritize);
     }
 
     /* End Processing of waitling list and add it to current queue */
@@ -215,42 +224,19 @@ void finishProcess(Process running)
     *shmId = -1;
 }
 
-void pushReadyQueue(Node **pq, queue **q, bool type)
+void nextSecondWaiting(int *lastSecond)
 {
-    Process receivedProcess;
-
-    // while there are new proecesses in the current second, push them to the ready queue
-    while (1)
-    {
-        bool newProcess = checkNewProcess(&receivedProcess);
-        if (!newProcess)
-            break;
-        else
-        {
-            lastProcess = receivedProcess.lastProcess;
-
-            //    Make it a function    //
-
-            // check if there is a memory for receivedProcess
-            // TRUE: PASS (Push and Allocate)
-            // FALSE: Add to the waiting list and return
-
-            if (!type)
-                push(pq, receivedProcess, receivedProcess.priority);
-            else
-                enqueue(*q, receivedProcess);
-
-            ////////////////////////////////
-        }
-    }
+    while (*lastSecond == getClk())
+        ;
+    *lastSecond = getClk();
 }
 
 void HPF()
 {
-    printf("HPF started\n");
     queueType = 0;
-    // 1. declare all needed variables
+    printf("HPF started\n");
 
+    // 1. declare all needed variables
     int lastSecond = -1;
     Process running;
 
@@ -267,18 +253,19 @@ void HPF()
     */
     while (!(lastProcess && isEmptyPQ(&pq) && *shmId == -1))
     {
-        pushReadyQueue(&pq, NULL, 0);
+        pushReadyQueue(&pq, NULL, 0, BY_PRIORITY);
 
         if (*shmId == 0) // the running process has finished
-            finishProcess(running);
+            finishProcess(running, BY_PRIORITY);
 
         if (!isEmptyPQ(&pq) && *shmId == -1)
         {
             running = pop(&pq);
             *shmId = running.executaionTime + 1;
-            startProcess(&running);
-            printf("After calling: %d\n", running.memOffset);
+            running.pid = startProcess(running);
         }
+
+        nextSecondWaiting(&lastSecond);
     }
 }
 
@@ -287,7 +274,6 @@ void SRTN()
     printf("SRTN started\n");
 
     // 1. declare all needed variables
-    Node *pq;
     Process running;
     int lastSecond = -1;
 
@@ -303,12 +289,12 @@ void SRTN()
     */
     while (!(lastProcess && isEmptyPQ(&pq) && *shmId == -1))
     {
-        pushReadyQueue(&pq, NULL, 0);
+        pushReadyQueue(&pq, NULL, 0, BY_REMAINING);
 
         if (*shmId == 0)
         { // the running process has finished
             printf("SRTN finished: %d\n", running.processSize);
-            finishProcess(running);
+            finishProcess(running, BY_REMAINING);
         }
 
         if (!isEmptyPQ(&pq))
@@ -330,7 +316,7 @@ void SRTN()
                 if (top.remainingTime < top.executaionTime) //Cont
                     continueProcess(running);
                 else
-                    startProcess(&running);
+                    running.pid = startProcess(running);
             }
             else // push it again into the pq
             {
@@ -338,10 +324,7 @@ void SRTN()
             }
         }
 
-        while (lastSecond == getClk())
-            ;
-
-        lastSecond = getClk();
+        nextSecondWaiting(&lastSecond);
     }
 }
 
@@ -368,11 +351,11 @@ void RR(int quantum)
     while (!(lastProcess && isEmpty(q) && *shmId == -1))
     {
         quantumCnt--;
-        pushReadyQueue(NULL, &q, 1);
+        pushReadyQueue(NULL, &q, 1, 0);
 
         if (*shmId == 0) // the running process has finished
         {
-            finishProcess(running);
+            finishProcess(running, 0);
             quantumCnt = quantum;
         }
 
@@ -396,12 +379,10 @@ void RR(int quantum)
             if (top.remainingTime < top.executaionTime) //cont
                 continueProcess(running);
             else
-                startProcess(&running);
+                running.pid = startProcess(running);
         }
 
-        while (lastSecond == getClk())
-            ;
-        lastSecond = getClk();
+        nextSecondWaiting(&lastSecond);
     }
 }
 
@@ -409,4 +390,5 @@ void clearResources(int signum)
 {
     shmctl(shmProcessRemainingTimeId, IPC_RMID, NULL);
     signal(SIGINT, SIG_DFL);
+    // kill(getpid(), SIGINT);
 }

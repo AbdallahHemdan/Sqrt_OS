@@ -154,6 +154,17 @@ void destroyClk(bool terminateAll)
     }
 }
 
+/*
+ * Linked-list implementation
+ * we used linked-list to benefit from the dynamic allocation
+ * 
+ * How to initialize it:
+ *      lNode *ls;
+ *      insert(&ls, val);
+ *      extract(&ls);
+ * 
+*/
+
 typedef struct lNode lNode;
 
 struct lNode
