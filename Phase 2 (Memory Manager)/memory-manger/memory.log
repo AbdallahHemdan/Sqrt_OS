@@ -1,0 +1,5 @@
+#At time x allocated y bytes for process z from i to j
+At time 1 allocated 5 bytes for process 1 from 0 to 7
+At time 3, there is no memory space for allocation
+At time 6 freed 50 bytes from process 2 from -1 to 62
+At time 10 freed 5 bytes from process 1 from 0 to 7
