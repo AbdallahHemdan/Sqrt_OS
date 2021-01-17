@@ -5,7 +5,7 @@
 
 </div>
 
-<h3 align="center">OS ^ 1/2</h3>
+<h3 align="center">Sqrt OS</h3>
 
 <div align="center">
   
