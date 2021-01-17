@@ -1,5 +1,5 @@
 <div align="center">
-<a href="https://github.com/AdelRizq/mini-OS" rel="noopener">
+<a href="https://github.com/AbdallahHemdan/Sqrt_OS" rel="noopener">
   
   ![Component 14](https://user-images.githubusercontent.com/40190772/104843823-48f18c00-58d5-11eb-946f-510a76db56b3.png)
 
@@ -99,4 +99,4 @@
  </table>
 
 ### Licence
-[MIT Licence](https://github.com/AdelRizq/mini-OS/blob/main/LICENSE)
+[MIT Licence](https://github.com/AbdallahHemdan/Sqrt_OS/blob/main/LICENSE)
