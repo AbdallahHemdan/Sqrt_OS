@@ -34,9 +34,13 @@
 > Consider a Computer with 1-CPU and fixed size memory (1024 ==> can be changed).
 > Our scheduler implemented the complementary components as sketched in the following diagrams.
 
-📌 We are supporting the following Scheduling algorithms:
+📌 NOTE:
+
+> We are supporting the following Scheduling algorithms:
+
 1. HPF (Highest Priority First)
 2. STRN (Shortest Time Remaining Next)
+3. RR (Round Robin)
 
 <div align='center'><img src="assets/diagram.png"></div>
 
