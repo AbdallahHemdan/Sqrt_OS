@@ -34,6 +34,9 @@
 > Consider a Computer with 1-CPU and fixed size memory (1024 ==> can be changed).
 > Our scheduler implemented the complementary components as sketched in the following diagrams.
 
+📌 We are supporting the following Scheduling algorithms:
+1. HPF (Highest Priority First)
+2. STRN (Shortest Time Remaining Next)
 
 <div align='center'><img src="assets/diagram.png"></div>
 
@@ -46,37 +49,40 @@
 | RR - Waiting list |     Queue      |
 |       Buddy       |  Binary tree   |
 
-## Algorithm explanation and results
+## Algorithm Flow
 
-1. Phase 1
-    - Algo Explanation:
-        1. Recieve and push all processes came in the current second
-        2. Check the running process if it finishes or not (Check its remaining time through the according shared memory)
-        3. Check if the ready queue is not empty:
-           - True: based on the algo, we decide that we will switch or not
-        4. Wait till the next second
-    - Results:
-      - HPF
-        <div align='center'><img src="assets/HPF_result_P1.png"></div>
-      - SRTN
-        <div align='center'><img src="assets/SRTN_result_P1.png"></div>
-      - RR
-        <div align='center'><img src="assets/RR_result_P1.png"></div>
-2. Phase 2
-    - Algo Explanation:
-        1. Recieve processes came in the current second and based on the memory free space:
-            1. In case of free space: Allocate space for it and push it in the ready queue
-            2. Else: Push it in the waiting list
-        2. Check the running process if it finishes or not:
-            1. True: Free its allocated space and check the waiting list
-            2. False: Pass (continue the code flow)
-    - Results:
-      - HPF
-        <div align='center'><img src="assets/HPF_result_P2.png"></div>
-      - SRTN
-        <div align='center'><img src="assets/SRTN_result_P2.png"></div>
-      - RR
-        <div align='center'><img src="assets/RR_result_P2.png"></div>
+- Algo Explanation:
+    1. Recieve and process all processes which come in the current second
+      1. In case of free space: Allocate space for it and push it in the ready queue
+      2. Else: Push it in the waiting list
+
+    2. Check the running process if it finishes or not
+      1. True: Free its allocated space and check the waiting list
+      2. False: Pass (continue the code flow)
+    3. Check if the ready queue is not empty:
+       - True: based on the algo, we decide that we will switch or not
+    4. Wait till the next second
+
+
+## Results
+1. HPF Algorithm
+
+<div align='center'><img src="assets/HPF_result_P1.png"></div>
+<div align='center'><img src="assets/HPF_result_P2.png"></div>
+  
+<hr />
+
+2. SRTN Algorithm
+
+<div align='center'><img src="assets/SRTN_result_P1.png"></div>
+<div align='center'><img src="assets/SRTN_result_P2.png"></div>
+
+<hr />
+
+3. Round Robin Algorithm
+
+<div align='center'><img src="assets/RR_result_P1.png"></div>
+<div align='center'><img src="assets/RR_result_P2.png"></div>
         
 ### Contributors
 <table>
