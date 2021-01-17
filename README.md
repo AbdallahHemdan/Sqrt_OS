@@ -9,15 +9,15 @@
 
 <div align="center">
   
-  [![GitHub contributors](https://img.shields.io/github/contributors/AdelRizq/mini-OS)](https://github.com/AdelRizq/mini-OS/contributors)
-  [![GitHub issues](https://img.shields.io/github/issues/AdelRizq/mini-OS)](https://github.com/AdelRizq/mini-OS/issues)
-  [![GitHub forks](https://img.shields.io/github/forks/AdelRizq/mini-OS)](https://github.com/AdelRizq/mini-OS/network)
-  [![GitHub stars](https://img.shields.io/github/stars/AdelRizq/mini-OS)](https://github.com/AdelRizq/mini-OS/stargazers)
-  [![GitHub license](https://img.shields.io/github/license/AdelRizq/mini-OS)](https://github.com/AdelRizq/mini-OS/blob/master/LICENSE)
-  <img src="https://img.shields.io/github/languages/count/AdelRizq/mini-OS" />
-  <img src="https://img.shields.io/github/languages/top/AdelRizq/mini-OS" />
-  <img src="https://img.shields.io/github/languages/code-size/AdelRizq/mini-OS" />
-  <img src="https://img.shields.io/github/issues-pr-raw/AdelRizq/mini-OS" />
+  [![GitHub contributors](https://img.shields.io/github/contributors/AbdallahHemdan/Sqrt_OS)](https://github.com/AbdallahHemdan/Sqrt_OS/contributors)
+  [![GitHub issues](https://img.shields.io/github/issues/AbdallahHemdan/Sqrt_OS)](https://github.com/AbdallahHemdan/Sqrt_OS/issues)
+  [![GitHub forks](https://img.shields.io/github/forks/AbdallahHemdan/Sqrt_OS)](https://github.com/AbdallahHemdan/Sqrt_OS/network)
+  [![GitHub stars](https://img.shields.io/github/stars/AbdallahHemdan/Sqrt_OS)](https://github.com/AbdallahHemdan/Sqrt_OS/stargazers)
+  [![GitHub license](https://img.shields.io/github/license/AbdallahHemdan/Sqrt_OS)](https://github.com/AbdallahHemdan/Sqrt_OS/blob/master/LICENSE)
+  <img src="https://img.shields.io/github/languages/count/AbdallahHemdan/Sqrt_OS" />
+  <img src="https://img.shields.io/github/languages/top/AbdallahHemdan/Sqrt_OS" />
+  <img src="https://img.shields.io/github/languages/code-size/AbdallahHemdan/Sqrt_OS" />
+  <img src="https://img.shields.io/github/issues-pr-raw/AbdallahHemdan/Sqrt_OS" />
 
 </div>
 
