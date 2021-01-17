@@ -1,4 +1,11 @@
-# <font color='ff6c85 '>Mini OS</font>
+<div align="center">
+<a href="https://github.com/AdelRizq/mini-OS" rel="noopener">
+  
+  ![OS](https://user-images.githubusercontent.com/40190772/104843230-2447e500-58d2-11eb-92b2-6ca8d6e590b8.png)
+
+</div>
+
+<h3 align="center">OS ^ 1/2</h3>
 
 <div align="center">
   
@@ -14,23 +21,23 @@
 
 </div>
 
-## <font color='008080'>👨‍🎓 Introduction</font>
+## About
+> A CPU scheduler determines an order for the execution of its scheduled processes; it
+> decides which process will run according to a certain data structure that keeps track
+> of the processes in the system and their status.
 
- > A CPU scheduler determines an order for the execution of its scheduled processes; it
- > decides which process will run according to a certain data structure that keeps track
- > of the processes in the system and their status.
-
- > A process, upon creation, has one of the three states: Running, Ready, Blocked (doing
+> A process, upon creation, has one of the three states: Running, Ready, Blocked (doing
 > I/O, using other resources than CPU or waiting on unavailable resource).
 
-## <font color='008080'>🖥 System Description</font>
+## System Description
 
 > Consider a Computer with 1-CPU and fixed size memory (1024 ==> can be changed).
 > Our scheduler implemented the complementary components as sketched in the following diagrams.
 
+
 <div align='center'><img src="assets/diagram.png"></div>
 
-## <font color='008080'>🛒 Data structures used</font>
+## Used Data structures
 
 |     Algo/Part     |       DS       |
 |:-----------------:|:--------------:|
@@ -39,7 +46,7 @@
 | RR - Waiting list |     Queue      |
 |       Buddy       |  Binary tree   |
 
-## <font color='008080'>🧐 Algorithm explanation and results</font>
+## Algorithm explanation and results
 
 1. Phase 1
     - Algo Explanation:
@@ -70,3 +77,16 @@
         <div align='center'><img src="assets/SRTN_result_P2.png"></div>
       - RR
         <div align='center'><img src="assets/RR_result_P2.png"></div>
+        
+### Contributors
+<table>
+  <tr>
+    <td align="center"><a href="https://github.com/AbdallahHemdan"><img src="https://avatars1.githubusercontent.com/u/40190772?s=460&v=4" width="150px;" alt=""/><br /><sub><b>Abdallah Hemdan</b></sub></a><br /></td>
+     <td align="center"><a href="https://github.com/AdelRizq"><img src="https://avatars2.githubusercontent.com/u/40351413?s=460&v=4" width="150px;" alt=""/><br /><sub><b>Adel Mohamed</b></sub></a><br /></td>
+     <td align="center"><a href="https://github.com/ahmedsherif304"><img src="https://avatars1.githubusercontent.com/u/40776441?s=460&u=9939dbf6811189204bef5360d51cccfc9765d2a7&v=4" width="150px;" alt=""/><br /><sub><b>Ahmed Sherif</b></sub></a><br /></td>
+     <td align="center"><a href="https://github.com/Mahboub99"><img src="https://avatars3.githubusercontent.com/u/43186742?s=460&v=4" width="150px;" alt=""/><br /><sub><b>Ahmed Mahboub</b></sub></a><br /></td>
+  </tr>
+ </table>
+
+### Licence
+[MIT Licence](https://github.com/AdelRizq/mini-OS/blob/main/LICENSE)
