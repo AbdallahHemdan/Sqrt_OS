@@ -56,7 +56,7 @@ void compileAndRun(char *fileName, char *arg1, char *arg2)
     strcat(compile, fileName);
     strcat(compile, ".c -o ");
     strcat(compile, fileName);
-    strcat(compile, " -lm");
+    strcat(compile, ".out -lm");
 
     system(compile);
     execl(fileName, arg1, arg2, NULL);
