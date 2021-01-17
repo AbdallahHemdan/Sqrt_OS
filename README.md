@@ -1,7 +1,7 @@
 <div align="center">
 <a href="https://github.com/AdelRizq/mini-OS" rel="noopener">
   
-  ![OS](https://user-images.githubusercontent.com/40190772/104843230-2447e500-58d2-11eb-92b2-6ca8d6e590b8.png)
+  ![Component 14](https://user-images.githubusercontent.com/40190772/104843823-48f18c00-58d5-11eb-946f-510a76db56b3.png)
 
 </div>
 
