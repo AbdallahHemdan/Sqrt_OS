@@ -1,15 +1,36 @@
 # <font color='ff6c85 '>Mini OS</font>
 
-## <font color='008080'>Team members </font>
+<div align="center">
+  
+  [![GitHub contributors](https://img.shields.io/github/contributors/AdelRizq/mini-OS)](https://github.com/AdelRizq/mini-OS/contributors)
+  [![GitHub issues](https://img.shields.io/github/issues/AdelRizq/mini-OS)](https://github.com/AdelRizq/mini-OS/issues)
+  [![GitHub forks](https://img.shields.io/github/forks/AdelRizq/mini-OS)](https://github.com/AdelRizq/mini-OS/network)
+  [![GitHub stars](https://img.shields.io/github/stars/AdelRizq/mini-OS)](https://github.com/AdelRizq/mini-OS/stargazers)
+  [![GitHub license](https://img.shields.io/github/license/AdelRizq/mini-OS)](https://github.com/AdelRizq/mini-OS/blob/master/LICENSE)
+  <img src="https://img.shields.io/github/languages/count/AdelRizq/mini-OS" />
+  <img src="https://img.shields.io/github/languages/top/AdelRizq/mini-OS" />
+  <img src="https://img.shields.io/github/languages/code-size/AdelRizq/mini-OS" />
+  <img src="https://img.shields.io/github/issues-pr-raw/AdelRizq/mini-OS" />
 
-|      Name      | Sec | BN |
-|:--------------:|:---:|:--:|
-|  Ahmed Sherif  |  1  | 3  |
-| Ahmed Mohamed  |  1  | 6  |
-|  Adel Mohamed  |  1  | 31 |
-| Abdallah Ahmed |  2  | 1  |
+</div>
 
-## <font color='008080'>Data structures used</font>
+## <font color='008080'>👨‍🎓 Introduction</font>
+
+ > A CPU scheduler determines an order for the execution of its scheduled processes; it
+ > decides which process will run according to a certain data structure that keeps track
+ > of the processes in the system and their status.
+
+ > A process, upon creation, has one of the three states: Running, Ready, Blocked (doing
+> I/O, using other resources than CPU or waiting on unavailable resource).
+
+## <font color='008080'>🖥 System Description</font>
+
+> Consider a Computer with 1-CPU and fixed size memory (1024 ==> can be changed).
+> Our scheduler implemented the complementary components as sketched in the following diagrams.
+
+<div align='center'><img src="assets/diagram.png"></div>
+
+## <font color='008080'>🛒 Data structures used</font>
 
 |     Algo/Part     |       DS       |
 |:-----------------:|:--------------:|
@@ -18,7 +39,7 @@
 | RR - Waiting list |     Queue      |
 |       Buddy       |  Binary tree   |
 
-## <font color='008080'>Algorithm explanation and results</font>
+## <font color='008080'>🧐 Algorithm explanation and results</font>
 
 1. Phase 1
     - Algo Explanation:

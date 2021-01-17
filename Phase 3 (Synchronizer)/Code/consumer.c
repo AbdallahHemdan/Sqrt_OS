@@ -155,6 +155,8 @@ void clearResources(int sigNum)
     if (status_buffer.shm_nattch == 1)
         system("ipcrm -a");
 
+    
+
     signal(SIGINT, SIG_DFL);
     kill(getpid(), SIGINT);
 }
